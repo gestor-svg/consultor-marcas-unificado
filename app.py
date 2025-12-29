@@ -114,23 +114,21 @@ Recuerda:
             }
 
 def buscar_impi_selenium_fonetico(marca, clase_niza):
-    """
-    Búsqueda FONÉTICA en IMPI usando Selenium
-    VERSIÓN INTERNA - Búsqueda completa y profesional
-    Retorna: diccionario con resultados detallados
-    """
+    """Búsqueda FONÉTICA en IMPI usando Selenium"""
     chrome_options = Options()
     chrome_options.add_argument("--headless=new")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--disable-software-rasterizer")
+    chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--window-size=1920,1080")
+    chrome_options.add_argument("--single-process")  # IMPORTANTE para RAM baja
     chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-    import shutil
-
-# Detectar ruta de Chrome automáticamente
-chrome_binary = shutil.which("google-chrome-stable") or shutil.which("google-chrome") or "/usr/bin/google-chrome-stable"
-chrome_options.binary_location = chrome_binary
+    
+    # No necesitas especificar binary_location, Chrome está en PATH
+    # Si aún necesitas especificarlo:
+    # chrome_options.binary_location = "/usr/bin/google-chrome"
     
     driver = None
     resultado = {
@@ -146,8 +144,9 @@ chrome_options.binary_location = chrome_binary
         marca_norm = normalizar_marca(marca)
         print(f"\n[SELENIUM] Iniciando búsqueda fonética: '{marca_norm}' en Clase {clase_niza}")
         
+        # Chrome se encuentra automáticamente ahora
         driver = webdriver.Chrome(options=chrome_options)
-        driver.set_page_load_timeout(40)
+        driver.set_page_load_timeout(60)  # Aumentado
         
         # URL de búsqueda fonética
         url = "https://acervomarcas.impi.gob.mx:8181/marcanet/vistas/common/datos/bsqFoneticaCompleta.pgi"
