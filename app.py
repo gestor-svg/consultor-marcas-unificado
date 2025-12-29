@@ -126,7 +126,11 @@ def buscar_impi_selenium_fonetico(marca, clase_niza):
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--window-size=1920,1080")
     chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-    chrome_options.binary_location = "/usr/bin/google-chrome"
+    import shutil
+
+# Detectar ruta de Chrome automáticamente
+chrome_binary = shutil.which("google-chrome-stable") or shutil.which("google-chrome") or "/usr/bin/google-chrome-stable"
+chrome_options.binary_location = chrome_binary
     
     driver = None
     resultado = {
