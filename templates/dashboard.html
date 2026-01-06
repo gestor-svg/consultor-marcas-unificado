@@ -16,7 +16,7 @@
                 <p class="text-gray-600 mt-2">Gestión de leads y análisis de marcas</p>
             </div>
             <div class="text-right">
-                <p class="text-sm text-gray-500">{{ "now"|datetimeformat }}</p>
+                <p class="text-sm text-gray-500">Última actualización</p>
             </div>
         </div>
     </div>
@@ -212,19 +212,4 @@
     </div>
     
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-// Filtro personalizado para fecha
-Jinja2.filters.datetimeformat = function() {
-    return new Date().toLocaleDateString('es-MX', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-};
-</script>
 {% endblock %}
