@@ -28,7 +28,7 @@ class ConfigGemini:
     # API Key debe venir de variable de entorno
     import os
     API_KEY = os.getenv('API_KEY_GEMINI')
-    MODEL = "gemini-pro"
+    MODEL = "gemini-1.5-flash"
     
     # Parámetros de generación
     TEMPERATURE = 0.7  # Creatividad moderada
