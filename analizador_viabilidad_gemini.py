@@ -1,3 +1,6 @@
+zador viabilidad gemini · PY
+Copiar
+
 """
 Analizador de Viabilidad con Gemini
 ====================================
@@ -25,7 +28,9 @@ logger = logging.getLogger(__name__)
 class ConfigGemini:
     """Configuración de Gemini"""
     
-    
+    # API Key debe venir de variable de entorno
+    import os
+    API_KEY = os.getenv('GEMINI_API_KEY')
     MODEL = "gemini-pro"
     
     # Parámetros de generación
