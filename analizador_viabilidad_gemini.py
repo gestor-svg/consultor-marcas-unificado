@@ -9,11 +9,13 @@ Autor: Gestor SVG / MarcaSegura
 Fecha: Enero 2026
 """
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from typing import Dict, List, Optional, Tuple
 import logging
 import json
 from datetime import datetime
+import os
 
 from impi_fonetico_COMPLETO import ResultadoBusqueda, MarcaInfo
 
@@ -26,9 +28,8 @@ class ConfigGemini:
     """Configuración de Gemini"""
     
     # API Key debe venir de variable de entorno
-    import os
-    API_KEY = os.getenv('API_KEY_GEMINI')
-    MODEL = "gemini-1.5-flash"
+    API_KEY = os.getenv('GEMINI_API_KEY')
+    MODEL = "gemini-2.0-flash-exp"  # Modelo actualizado
     
     # Parámetros de generación
     TEMPERATURE = 0.7  # Creatividad moderada
@@ -100,22 +101,14 @@ class AnalizadorViabilidadGemini:
         """
         self.config = ConfigGemini()
         
-        # Configurar Gemini
+        # Configurar Gemini con nueva API
         api_key = api_key or self.config.API_KEY
-        genai.configure(api_key=api_key)
         
-        # Configurar modelo
-        generation_config = {
-            "temperature": self.config.TEMPERATURE,
-            "top_p": self.config.TOP_P,
-            "top_k": self.config.TOP_K,
-            "max_output_tokens": self.config.MAX_OUTPUT_TOKENS,
-        }
+        if not api_key:
+            raise ValueError("API key de Gemini no configurada. Verifica GEMINI_API_KEY en variables de entorno.")
         
-        self.model = genai.GenerativeModel(
-            model_name=self.config.MODEL,
-            generation_config=generation_config
-        )
+        # Crear cliente con nueva API
+        self.client = genai.Client(api_key=api_key)
         
         logger.info(f"✅ Analizador Gemini inicializado con modelo {self.config.MODEL}")
     
@@ -150,8 +143,17 @@ class AnalizadorViabilidadGemini:
             
             logger.debug(f"Prompt generado: {len(prompt)} caracteres")
             
-            # Llamar a Gemini
-            response = self.model.generate_content(prompt)
+            # Llamar a Gemini con nueva API
+            response = self.client.models.generate_content(
+                model=self.config.MODEL,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=self.config.TEMPERATURE,
+                    top_p=self.config.TOP_P,
+                    top_k=self.config.TOP_K,
+                    max_output_tokens=self.config.MAX_OUTPUT_TOKENS
+                )
+            )
             
             if not response or not response.text:
                 logger.error("Gemini no devolvió respuesta")
