@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class ConfigGemini:
     """Configuración de Gemini"""
     
-    API_KEY = "AIzaSyDHXqcLt11TDnkiApSbsVjbU981k0xkl3c"
+    
     MODEL = "gemini-pro"
     
     # Parámetros de generación
