@@ -350,11 +350,14 @@ class IMPIBuscadorFonetico:
                         continue
                     
                     html_content = str(update.string)
-                    logger.info(f"📄 Update #{idx+1} - Primeros 500 caracteres: {html_content[:500]}")
                     
-                    # Buscar si este update contiene la tabla de resultados
+                    # Buscar si este update contiene la tabla de resultados (sin importar posición)
                     if 'resultadoExpediente' in html_content or 'tabla-franjas' in html_content:
-                        logger.info(f"✅ Update #{idx+1} parece contener resultados!")
+                        logger.info(f"✅ Update #{idx+1} contiene resultados! (longitud: {len(html_content)} caracteres)")
+                        
+                        # Mostrar una muestra del medio del contenido (donde suele estar el HTML)
+                        middle_pos = len(html_content) // 2
+                        logger.info(f"📄 Muestra del medio del contenido: {html_content[middle_pos:middle_pos+500]}")
                         
                         # Parsear el HTML interno
                         soup = BeautifulSoup(html_content, 'lxml')
@@ -364,11 +367,13 @@ class IMPIBuscadorFonetico:
                         
                         if not tbody:
                             tbody = soup.find('tbody', class_='ui-datatable-data')
-                            logger.info("🔄 Intentando buscar tbody por clase")
+                            if tbody:
+                                logger.info("🔄 Encontrado tbody por clase")
                         
                         if not tbody:
                             tbody = soup.find('tbody')
-                            logger.info("🔄 Intentando buscar cualquier tbody")
+                            if tbody:
+                                logger.info("🔄 Encontrado tbody genérico")
                         
                         if tbody:
                             # Buscar todas las filas con data-ri
