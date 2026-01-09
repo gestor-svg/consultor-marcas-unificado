@@ -277,13 +277,15 @@ class IMPIBuscadorFonetico:
         """
         
         # Preparar datos del formulario (nombres exactos del IMPI)
+        # IMPORTANTE: Estos parámetros deben coincidir EXACTAMENTE con los del navegador
         data = {
-            'frmBsqFonetica': 'frmBsqFonetica',  # Campo oculto requerido
-            'frmBsqFonetica:denominacion': marca.strip().upper(),
             'javax.faces.partial.ajax': 'true',
             'javax.faces.source': 'frmBsqFonetica:busquedaId2',
-            'javax.faces.partial.execute': 'frmBsqFonetica',
+            'javax.faces.partial.execute': '@all',  # CRÍTICO: debe ser @all, no frmBsqFonetica
             'javax.faces.partial.render': 'frmBsqFonetica',
+            'frmBsqFonetica:busquedaId2': 'frmBsqFonetica:busquedaId2',  # Submit button
+            'frmBsqFonetica': 'frmBsqFonetica',
+            'frmBsqFonetica:denominacion': marca.strip().upper(),
         }
         
         # Agregar clase si se especificó
