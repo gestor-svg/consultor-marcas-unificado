@@ -112,26 +112,53 @@
         <div class="bg-white rounded-lg shadow-sm p-6">
             <h2 class="text-2xl font-bold text-gray-900 mb-4">
                 <i class="fas fa-brain text-purple-600 mr-2"></i>
-                Análisis de Inteligencia Artificial
+                Análisis Mejorado por IA
             </h2>
             
             <div id="analisis-texto" class="prose max-w-none text-gray-700 bg-gray-50 rounded-lg p-6">
-                <!-- El análisis se insertará aquí -->
+                <!-- El análisis se insertará aquí como textarea editable -->
             </div>
             
             <!-- Factores -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                <div id="factores-riesgo-container">
-                    <!-- Se insertará dinámicamente -->
+                <div>
+                    <h3 class="font-semibold text-red-900 mb-3 flex items-center">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        Factores de Riesgo
+                    </h3>
+                    <textarea id="factores-riesgo-editable" 
+                              rows="6" 
+                              class="w-full px-4 py-3 border border-red-200 bg-red-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition text-sm"
+                              placeholder="• Factor de riesgo 1
+• Factor de riesgo 2
+• Factor de riesgo 3"></textarea>
                 </div>
-                <div id="factores-favorables-container">
-                    <!-- Se insertará dinámicamente -->
+                <div>
+                    <h3 class="font-semibold text-green-900 mb-3 flex items-center">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Factores Favorables
+                    </h3>
+                    <textarea id="factores-favorables-editable" 
+                              rows="6" 
+                              class="w-full px-4 py-3 border border-green-200 bg-green-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition text-sm"
+                              placeholder="• Factor favorable 1
+• Factor favorable 2
+• Factor favorable 3"></textarea>
                 </div>
             </div>
             
             <!-- Recomendaciones -->
-            <div id="recomendaciones-container" class="mt-6">
-                <!-- Se insertará dinámicamente -->
+            <div class="mt-6">
+                <h3 class="font-semibold text-purple-900 mb-3 flex items-center">
+                    <i class="fas fa-lightbulb mr-2"></i>
+                    Recomendaciones
+                </h3>
+                <textarea id="recomendaciones-editable" 
+                          rows="6" 
+                          class="w-full px-4 py-3 border border-purple-200 bg-purple-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition text-sm"
+                          placeholder="1. Recomendación 1
+2. Recomendación 2
+3. Recomendación 3"></textarea>
             </div>
         </div>
         
@@ -317,40 +344,22 @@ function cargarDatosEnPagina() {
                   placeholder="Edita el análisis de Gemini aquí...">${analisisGemini.analisis_detallado}</textarea>
     `;
     
-    // Factores de riesgo
+    // Factores de riesgo - Llenar textarea editable
     if (analisisGemini.factores_riesgo && analisisGemini.factores_riesgo.length > 0) {
-        let htmlRiesgo = '<div class="bg-red-50 rounded-lg p-4">';
-        htmlRiesgo += '<h3 class="font-semibold text-red-900 mb-3"><i class="fas fa-exclamation-triangle mr-2"></i>Factores de Riesgo</h3>';
-        htmlRiesgo += '<ul class="space-y-2">';
-        analisisGemini.factores_riesgo.forEach(factor => {
-            htmlRiesgo += `<li class="text-sm text-red-800">• ${factor}</li>`;
-        });
-        htmlRiesgo += '</ul></div>';
-        document.getElementById('factores-riesgo-container').innerHTML = htmlRiesgo;
+        const textRiesgo = analisisGemini.factores_riesgo.map(f => `• ${f}`).join('\n');
+        document.getElementById('factores-riesgo-editable').value = textRiesgo;
     }
     
-    // Factores favorables
+    // Factores favorables - Llenar textarea editable
     if (analisisGemini.factores_favorables && analisisGemini.factores_favorables.length > 0) {
-        let htmlFavorable = '<div class="bg-green-50 rounded-lg p-4">';
-        htmlFavorable += '<h3 class="font-semibold text-green-900 mb-3"><i class="fas fa-check-circle mr-2"></i>Factores Favorables</h3>';
-        htmlFavorable += '<ul class="space-y-2">';
-        analisisGemini.factores_favorables.forEach(factor => {
-            htmlFavorable += `<li class="text-sm text-green-800">• ${factor}</li>`;
-        });
-        htmlFavorable += '</ul></div>';
-        document.getElementById('factores-favorables-container').innerHTML = htmlFavorable;
+        const textFavorable = analisisGemini.factores_favorables.map(f => `• ${f}`).join('\n');
+        document.getElementById('factores-favorables-editable').value = textFavorable;
     }
     
-    // Recomendaciones
+    // Recomendaciones - Llenar textarea editable
     if (analisisGemini.recomendaciones && analisisGemini.recomendaciones.length > 0) {
-        let htmlRec = '<div class="bg-purple-50 rounded-lg p-4">';
-        htmlRec += '<h3 class="font-semibold text-purple-900 mb-3"><i class="fas fa-lightbulb mr-2"></i>Recomendaciones</h3>';
-        htmlRec += '<ol class="space-y-2">';
-        analisisGemini.recomendaciones.forEach((rec, i) => {
-            htmlRec += `<li class="text-sm text-purple-800">${i + 1}. ${rec}</li>`;
-        });
-        htmlRec += '</ol></div>';
-        document.getElementById('recomendaciones-container').innerHTML = htmlRec;
+        const textRecomendaciones = analisisGemini.recomendaciones.map((r, i) => `${i + 1}. ${r}`).join('\n');
+        document.getElementById('recomendaciones-editable').value = textRecomendaciones;
     }
 }
 
@@ -403,12 +412,32 @@ async function generarPDF() {
         
         const porcentajeAjustado = parseInt(document.getElementById('slider-viabilidad').value);
         const notasExperto = document.getElementById('notas-experto').value;
+        
+        // Obtener todos los campos editables
         const analisisEditado = document.getElementById('analisis-editable') ? 
                                document.getElementById('analisis-editable').value : 
                                analisisGemini.analisis_detallado;
         
-        // Actualizar el análisis con el texto editado
-        const analisisActualizado = {...analisisGemini, analisis_detallado: analisisEditado};
+        const factoresRiesgoEditado = document.getElementById('factores-riesgo-editable') ?
+                                     document.getElementById('factores-riesgo-editable').value.split('\n').filter(l => l.trim()) :
+                                     analisisGemini.factores_riesgo;
+        
+        const factoresFavorablesEditado = document.getElementById('factores-favorables-editable') ?
+                                         document.getElementById('factores-favorables-editable').value.split('\n').filter(l => l.trim()) :
+                                         analisisGemini.factores_favorables;
+        
+        const recomendacionesEditado = document.getElementById('recomendaciones-editable') ?
+                                      document.getElementById('recomendaciones-editable').value.split('\n').filter(l => l.trim()) :
+                                      analisisGemini.recomendaciones;
+        
+        // Actualizar el análisis con todos los campos editados
+        const analisisActualizado = {
+            ...analisisGemini,
+            analisis_detallado: analisisEditado,
+            factores_riesgo: factoresRiesgoEditado,
+            factores_favorables: factoresFavorablesEditado,
+            recomendaciones: recomendacionesEditado
+        };
         
         const response = await fetch('/api/generar-pdf', {
             method: 'POST',
