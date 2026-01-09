@@ -261,12 +261,22 @@ function cargarDatosEnPagina() {
     // Marcas similares
     document.getElementById('total-marcas').textContent = resultadoBusqueda.total_registros;
     
-    const marcas = resultadoBusqueda.marcas_similares.slice(0, 15);
+    // Obtener marcas ordenadas de Gemini o usar las del IMPI
+    let marcas = [];
+    if (analisisGemini.marcas_conflictivas && analisisGemini.marcas_conflictivas.length > 0) {
+        // Usar las ordenadas por Gemini
+        marcas = analisisGemini.marcas_conflictivas.slice(0, 15);
+    } else {
+        // Fallback a las del IMPI
+        marcas = resultadoBusqueda.marcas_similares.slice(0, 15);
+    }
+    
     let tablaHTML = '<table class="min-w-full divide-y divide-gray-200">';
     tablaHTML += '<thead class="bg-gray-100"><tr>';
     tablaHTML += '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>';
     tablaHTML += '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Denominación</th>';
     tablaHTML += '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Expediente</th>';
+    tablaHTML += '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Registro</th>';
     tablaHTML += '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Clase</th>';
     tablaHTML += '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Titular</th>';
     tablaHTML += '</tr></thead><tbody class="bg-white divide-y divide-gray-200">';
@@ -276,6 +286,7 @@ function cargarDatosEnPagina() {
         tablaHTML += `<td class="px-4 py-3 text-sm text-gray-900">${i + 1}</td>`;
         tablaHTML += `<td class="px-4 py-3 text-sm font-medium text-gray-900">${marca.denominacion}</td>`;
         tablaHTML += `<td class="px-4 py-3 text-sm text-gray-600">${marca.expediente}</td>`;
+        tablaHTML += `<td class="px-4 py-3 text-sm text-gray-600">${marca.registro || '-'}</td>`;
         tablaHTML += `<td class="px-4 py-3 text-sm"><span class="badge badge-info">${marca.clase}</span></td>`;
         tablaHTML += `<td class="px-4 py-3 text-sm text-gray-600">${marca.titular.substring(0, 40)}...</td>`;
         tablaHTML += `</tr>`;
@@ -289,8 +300,13 @@ function cargarDatosEnPagina() {
     
     document.getElementById('tabla-marcas-container').innerHTML = tablaHTML;
     
-    // Análisis
-    document.getElementById('analisis-texto').innerHTML = '<p>' + analisisGemini.analisis_detallado.replace(/\n/g, '</p><p>') + '</p>';
+    // Análisis - EDITABLE
+    document.getElementById('analisis-texto').innerHTML = `
+        <textarea id="analisis-editable" 
+                  rows="10" 
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+                  placeholder="Edita el análisis de Gemini aquí...">${analisisGemini.analisis_detallado}</textarea>
+    `;
     
     // Factores de riesgo
     if (analisisGemini.factores_riesgo && analisisGemini.factores_riesgo.length > 0) {
@@ -337,6 +353,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const valor = e.target.value;
             document.getElementById('valor-ajustado').textContent = valor + '%';
             actualizarCategoriaViabilidad(parseInt(valor));
+            
+            // Actualizar el porcentaje en el textarea del análisis si existe
+            const textareaAnalisis = document.getElementById('analisis-editable');
+            if (textareaAnalisis) {
+                // Reemplazar cualquier mención del porcentaje en el texto
+                let texto = textareaAnalisis.value;
+                texto = texto.replace(/\b\d+%/g, valor + '%');
+                textareaAnalisis.value = texto;
+            }
         });
     }
 });
@@ -369,6 +394,12 @@ async function generarPDF() {
         
         const porcentajeAjustado = parseInt(document.getElementById('slider-viabilidad').value);
         const notasExperto = document.getElementById('notas-experto').value;
+        const analisisEditado = document.getElementById('analisis-editable') ? 
+                               document.getElementById('analisis-editable').value : 
+                               analisisGemini.analisis_detallado;
+        
+        // Actualizar el análisis con el texto editado
+        const analisisActualizado = {...analisisGemini, analisis_detallado: analisisEditado};
         
         const response = await fetch('/api/generar-pdf', {
             method: 'POST',
@@ -376,7 +407,7 @@ async function generarPDF() {
             body: JSON.stringify({
                 email: lead.email,
                 porcentaje_viabilidad: porcentajeAjustado,
-                analisis: analisisGemini,
+                analisis: analisisActualizado,
                 resultado_busqueda: resultadoBusqueda,
                 notas_experto: notasExperto
             })
