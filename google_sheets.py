@@ -257,6 +257,56 @@ class GoogleSheetsClient:
         
         return self.actualizar_lead(email, {'notas_experto': nota})
     
+    def agregar_lead(self, lead_data: Dict) -> bool:
+        """
+        Agrega un nuevo lead a Google Sheets
+        
+        Args:
+            lead_data: Diccionario con los datos del lead
+                      Campos esperados: fecha, nombre, email, telefono, marca,
+                      tipo_negocio, clase_sugerida, status_impi, pagado, analizado, pdf_url, notas
+        
+        Returns:
+            True si se agregó correctamente
+        """
+        
+        try:
+            params = {
+                'action': 'addLead'
+            }
+            
+            # Convertir booleanos a strings para Google Sheets
+            lead_formatted = lead_data.copy()
+            if 'pagado' in lead_formatted:
+                lead_formatted['pagado'] = 'TRUE' if lead_formatted['pagado'] else 'FALSE'
+            if 'analizado' in lead_formatted:
+                lead_formatted['analizado'] = 'TRUE' if lead_formatted['analizado'] else 'FALSE'
+            
+            response = requests.post(
+                self.apps_script_url,
+                json={
+                    **params,
+                    'leadData': lead_formatted
+                },
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                if result.get('success'):
+                    logger.info(f"✅ Lead agregado exitosamente: {lead_data.get('email')}")
+                    return True
+                else:
+                    logger.error(f"Error agregando lead: {result.get('error', 'Unknown error')}")
+                    return False
+            else:
+                logger.error(f"Error HTTP agregando lead: {response.status_code}")
+                return False
+        
+        except Exception as e:
+            logger.error(f"Error agregando lead: {str(e)}")
+            return False
+    
     def obtener_estadisticas(self) -> Dict:
         """
         Obtiene estadísticas generales de los leads

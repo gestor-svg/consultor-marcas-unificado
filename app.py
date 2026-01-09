@@ -152,8 +152,9 @@ def iniciar_analisis(email):
         return redirect(url_for('dashboard'))
     
     # Verificar que esté pagado
-    # Nota: Permitir analizar todos los leads manualmente
-# El experto decide cuándo analizar
+    if lead.get('pagado') != 'TRUE':
+        flash('Este lead aún no ha pagado', 'warning')
+        return redirect(url_for('dashboard'))
     
     return render_template(
         'analizar.html',
@@ -398,6 +399,83 @@ def api_aprobar_pdf():
     
     except Exception as e:
         logger.error(f"❌ Error aprobando PDF: {str(e)}", exc_info=True)
+        return jsonify({
+            'error': True,
+            'mensaje': str(e)
+        }), 500
+
+
+# =============================================================================
+# GESTIÓN DE LEADS
+# =============================================================================
+
+@app.route('/api/crear-lead', methods=['POST'])
+@login_required
+def api_crear_lead():
+    """API para crear un nuevo lead manualmente"""
+    
+    try:
+        data = request.get_json()
+        
+        # Validar campos requeridos
+        campos_requeridos = ['nombre', 'email', 'telefono', 'marca']
+        for campo in campos_requeridos:
+            if not data.get(campo):
+                return jsonify({
+                    'error': True,
+                    'mensaje': f'Campo requerido: {campo}'
+                }), 400
+        
+        # Validar formato de email
+        email = data.get('email').strip().lower()
+        if '@' not in email or '.' not in email:
+            return jsonify({
+                'error': True,
+                'mensaje': 'Email inválido'
+            }), 400
+        
+        # Verificar si el email ya existe
+        lead_existente = sheets_client.obtener_lead_por_email(email)
+        if lead_existente:
+            return jsonify({
+                'error': True,
+                'mensaje': 'Ya existe un lead con este email'
+            }), 400
+        
+        # Preparar datos del lead
+        nuevo_lead = {
+            'fecha': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'nombre': data.get('nombre').strip(),
+            'email': email,
+            'telefono': data.get('telefono').strip(),
+            'marca': data.get('marca').strip(),
+            'tipo_negocio': data.get('tipo_negocio', '').strip(),
+            'clase_sugerida': data.get('clase_sugerida', ''),
+            'status_impi': 'pendiente',
+            'pagado': False,
+            'analizado': False,
+            'pdf_url': '',
+            'notas': 'Lead creado manualmente por ' + obtener_usuario_actual()
+        }
+        
+        logger.info(f"📝 Creando nuevo lead manual: {nuevo_lead['nombre']} ({email})")
+        
+        # Guardar en Google Sheets
+        resultado = sheets_client.agregar_lead(nuevo_lead)
+        
+        if not resultado:
+            raise Exception('Error guardando en Google Sheets')
+        
+        logger.info(f"✅ Lead creado exitosamente: {email}")
+        
+        return jsonify({
+            'exito': True,
+            'mensaje': 'Lead creado exitosamente',
+            'email': email
+        })
+    
+    except Exception as e:
+        logger.error(f"❌ Error creando lead: {str(e)}", exc_info=True)
         return jsonify({
             'error': True,
             'mensaje': str(e)
