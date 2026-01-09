@@ -342,11 +342,24 @@ class IMPIBuscadorFonetico:
                     # Extraer HTML del CDATA
                     html_content = str(update.string)
                     
+                    # DEBUG: Ver estructura del HTML
+                    logger.info(f"📄 Primeros 1000 caracteres del HTML interno: {html_content[:1000]}")
+                    
                     # Parsear el HTML interno
                     soup = BeautifulSoup(html_content, 'lxml')
                     
-                    # Buscar tbody con ID específico
+                    # Buscar tbody - probar varios métodos
                     tbody = soup.find('tbody', id='frmBsqFonetica:resultadoExpediente_data')
+                    
+                    if not tbody:
+                        # Intentar sin ID específico
+                        tbody = soup.find('tbody', class_='ui-datatable-data')
+                        logger.info("🔄 Intentando buscar tbody por clase")
+                    
+                    if not tbody:
+                        # Buscar cualquier tbody
+                        tbody = soup.find('tbody')
+                        logger.info("🔄 Intentando buscar cualquier tbody")
                     
                     if tbody:
                         # Buscar todas las filas con data-ri (row index)
