@@ -323,17 +323,27 @@ class IMPIBuscadorFonetico:
         total_registros = 0
         
         try:
-            # Usar lxml para parsear XML correctamente
-            soup = BeautifulSoup(response.content, 'lxml')
+            # Usar lxml-xml para parsear XML correctamente (no HTML)
+            soup = BeautifulSoup(response.content, 'xml')
             html_text = response.text
+            
+            # Debug: Ver primeras líneas de la respuesta
+            logger.debug(f"Primeros 500 caracteres de respuesta: {html_text[:500]}")
             
             # 1. Detectar total de registros (múltiples métodos)
             total_registros = self._detectar_total_registros(html_text, soup)
             logger.info(f"📊 Total de registros detectados: {total_registros}")
             
-            # 2. Si hay resultados, parsearlos
+            # 2. Intentar extraer marcas (incluso si total_registros es 0, por si el detector falla)
+            marcas = self._extraer_marcas_de_tabla(soup)
+            
+            # 3. Si encontramos marcas pero total_registros era 0, actualizar
+            if marcas and total_registros == 0:
+                total_registros = len(marcas)
+                logger.info(f"✅ Corregido: Se encontraron {total_registros} marcas en la tabla")
+            
+            # 4. Verificar coherencia
             if total_registros > 0:
-                marcas = self._extraer_marcas_de_tabla(soup)
                 logger.info(f"✅ Marcas parseadas: {len(marcas)}")
             else:
                 logger.info("ℹ️ No se encontraron resultados")
