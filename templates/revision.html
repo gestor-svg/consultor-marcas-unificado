@@ -252,7 +252,7 @@ window.addEventListener('DOMContentLoaded', () => {
         
         if (!resultadoBusqueda || !analisisGemini) {
             alert('No se encontraron datos del análisis. Redirigiendo...');
-            window.location.href = "{{ url_for('iniciar_analisis', email=lead.email) }}?auto=true";
+            window.location.href = "{{ url_for('iniciar_analisis', lead_id=lead.id) }}?auto=true";
             return;
         }
         
