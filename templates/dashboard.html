@@ -188,7 +188,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             {% if lead.analizado != 'TRUE' and lead.analizado != true %}
                                 <!-- Mostrar botón Analizar si NO está analizado -->
-                                <a href="{{ url_for('iniciar_analisis', email=lead.email) }}" 
+                                <a href="{{ url_for('iniciar_analisis', lead_id=lead.id) }}" 
                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 transition">
                                     <i class="fas fa-search mr-2"></i>
                                     Analizar

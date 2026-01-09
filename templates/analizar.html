@@ -231,7 +231,7 @@ async function iniciarAnalisis() {
 
 function irARevision() {
     // Redirigir a página de revisión
-    window.location.href = "{{ url_for('revision', email=lead.email) }}";
+    window.location.href = "{{ url_for('revision', lead_id=lead.id) }}";
 }
 
 // Auto-iniciar si viene con parámetro
