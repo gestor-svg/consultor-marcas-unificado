@@ -262,41 +262,6 @@ IMPORTANTE: Las "top_15_conflictivas" deben estar ORDENADAS por riesgo descenden
         
         return prompt
     
-  "factores_favorables": [
-    "<factor favorable 1>",
-    "<factor favorable 2>"
-  ]
-}
-```
-
-**CRITERIOS DE EVALUACIÓN:**
-
-1. **Similitud fonética:** ¿Qué tan similar suena la marca consultada con las existentes?
-2. **Similitud visual:** ¿Qué tan parecidas se escriben?
-3. **Misma clase de Niza:** Marcas en la misma clase son más conflictivas
-4. **Cantidad de similares:** Más marcas similares = menor viabilidad
-5. **Titulares:** Si el mismo titular tiene varias similares, puede ser estrategia de defensa
-6. **Distintividad:** ¿La marca tiene elementos distintivos suficientes?
-
-**ESCALA DE VIABILIDAD:**
-- 0-25%: Muy pocas posibilidades (no recomendado)
-- 26-50%: Pocas posibilidades (riesgoso)
-- 51-65%: Posible con modificaciones (considerar cambios)
-- 66-85%: Buena posibilidad (recomendado)
-
-**IMPORTANTE:**
-- NUNCA des 100% de viabilidad (máximo 85%)
-- Sé conservador pero realista
-- Considera que el revisor del IMPI tiene la decisión final
-- Si no hay marcas similares, la viabilidad es alta (70-85%)
-- Si hay 1-3 marcas similares pero en clases diferentes, viabilidad media-alta (60-75%)
-- Si hay muchas marcas similares en la misma clase, viabilidad baja (20-50%)
-
-Responde SOLO con el JSON, sin texto adicional antes o después.
-"""
-        
-        return prompt
-    
     def _parsear_respuesta_gemini(
         self,
         respuesta_texto: str,
