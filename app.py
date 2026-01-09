@@ -151,10 +151,7 @@ def iniciar_analisis(email):
         flash('Lead no encontrado', 'error')
         return redirect(url_for('dashboard'))
     
-    # Verificar que esté pagado
-    if lead.get('pagado') != 'TRUE':
-        flash('Este lead aún no ha pagado', 'warning')
-        return redirect(url_for('dashboard'))
+    # NOTA: Ya no validamos si está pagado - permitimos analizar cualquier lead
     
     return render_template(
         'analizar.html',
