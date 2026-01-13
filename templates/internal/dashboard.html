@@ -187,25 +187,20 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <!-- Debug: Lead {{ lead.id }}, analizado_normalizado="{{ lead.analizado_normalizado }}" -->
-                            {% if lead.analizado_normalizado != 'TRUE' %}
-                                <!-- Mostrar botón Analizar si NO está analizado -->
-                                <a href="{{ url_for('iniciar_analisis', lead_id=lead.id) }}" 
-                                   class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 transition">
-                                    <i class="fas fa-search mr-2"></i>
-                                    Analizar
-                                </a>
-                            {% elif lead.analizado_normalizado == 'TRUE' and lead.pdf_url %}
-                                <!-- Mostrar botón Ver PDF si está analizado -->
+                            {% if lead.analizado_normalizado == 'TRUE' and lead.pdf_url %}
+                                <!-- Mostrar botón Ver PDF si está analizado Y tiene PDF -->
                                 <a href="{{ lead.pdf_url }}" 
                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition">
                                     <i class="fas fa-file-pdf mr-2"></i>
                                     Ver PDF
                                 </a>
                             {% else %}
-                                <span class="text-gray-400 text-sm">
-                                    <i class="fas fa-ban mr-1"></i>
-                                    No disponible (normalizado: {{ lead.analizado_normalizado }})
-                                </span>
+                                <!-- Mostrar botón Analizar si NO tiene PDF (incluso si fue analizado antes) -->
+                                <a href="{{ url_for('iniciar_analisis', lead_id=lead.id) }}" 
+                                   class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 transition">
+                                    <i class="fas fa-search mr-2"></i>
+                                    {% if lead.analizado_normalizado == 'TRUE' %}Re-analizar{% else %}Analizar{% endif %}
+                                </a>
                             {% endif %}
                         </td>
                     </tr>
