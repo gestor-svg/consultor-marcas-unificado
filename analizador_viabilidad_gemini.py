@@ -9,8 +9,7 @@ Autor: Gestor SVG / MarcaSegura
 Fecha: Enero 2026
 """
 
-from google.genai import Client
-from google.genai.types import GenerateContentConfig
+import google.generativeai as genai
 from typing import Dict, List, Optional, Tuple
 import logging
 import json
@@ -107,8 +106,11 @@ class AnalizadorViabilidadGemini:
         if not api_key:
             raise ValueError("API key de Gemini no configurada. Verifica GEMINI_API_KEY en variables de entorno.")
         
-        # Crear cliente con nueva API
-        self.client = Client(api_key=api_key)
+         # Configurar API key
+   genai.configure(api_key=api_key)
+   
+   # Crear modelo
+   self.model = genai.GenerativeModel(self.config.MODEL)
         
         logger.info(f"✅ Analizador Gemini inicializado con modelo {self.config.MODEL}")
     
@@ -144,10 +146,9 @@ class AnalizadorViabilidadGemini:
             logger.debug(f"Prompt generado: {len(prompt)} caracteres")
             
             # Llamar a Gemini con nueva API
-            response = self.client.models.generate_content(
-                model=self.config.MODEL,
-                contents=prompt,
-                config=GenerateContentConfig(
+           response = self.model.generate_content(
+       prompt,
+       generation_config=genai.GenerationConfig(
                     temperature=self.config.TEMPERATURE,
                     top_p=self.config.TOP_P,
                     top_k=self.config.TOP_K,
