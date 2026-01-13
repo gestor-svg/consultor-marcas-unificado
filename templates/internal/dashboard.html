@@ -186,6 +186,7 @@
                             {% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <!-- Debug: Lead {{ lead.id }}, analizado_normalizado="{{ lead.analizado_normalizado }}" -->
                             {% if lead.analizado_normalizado != 'TRUE' %}
                                 <!-- Mostrar botón Analizar si NO está analizado -->
                                 <a href="{{ url_for('iniciar_analisis', lead_id=lead.id) }}" 
@@ -203,7 +204,7 @@
                             {% else %}
                                 <span class="text-gray-400 text-sm">
                                     <i class="fas fa-ban mr-1"></i>
-                                    No disponible
+                                    No disponible (normalizado: {{ lead.analizado_normalizado }})
                                 </span>
                             {% endif %}
                         </td>
