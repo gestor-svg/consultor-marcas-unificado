@@ -180,14 +180,22 @@ def capturar_lead():
         
         logger.info(f"\n[LEAD PÚBLICO] {datos_lead['nombre']} - {datos_lead['marca']}")
         
-        # Guardar en Google Sheets usando addLead
-        resultado = sheets_client.agregar_lead(datos_lead)
-        
-        if not resultado:
-            logger.error("[SHEETS] Error al guardar lead")
-            return jsonify({"success": False, "error": "Error al guardar lead"}), 500
-        
-        logger.info(f"[SHEETS] Lead guardado con ID: {resultado.get('id')}")
+       # Guardar en Google Sheets usando addLead
+resultado = sheets_client.agregar_lead(datos_lead)
+
+if not resultado:
+    logger.error("[SHEETS] Error al guardar lead")
+    return jsonify({"success": False, "error": "Error al guardar lead"}), 500
+
+# Manejar diferentes tipos de respuesta
+lead_id = None
+if isinstance(resultado, dict):
+    lead_id = resultado.get('id')
+    logger.info(f"[SHEETS] Lead guardado con ID: {lead_id}")
+elif resultado is True:
+    logger.info("[SHEETS] Lead guardado exitosamente")
+else:
+    logger.warning(f"[SHEETS] Respuesta inesperada: {type(resultado)}")
         
         # Enviar notificación push
         if Config.NTFY_ENABLED:
