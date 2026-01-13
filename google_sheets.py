@@ -31,13 +31,17 @@ class GoogleSheetsClient:
     def obtener_leads(
         self,
         filtro: Optional[str] = None,
+        filtro_pagado: Optional[str] = None,
+        filtro_analizado: Optional[str] = None,
         limite: Optional[int] = None
     ) -> List[Dict]:
         """
         Obtiene los leads del Google Sheet
         
         Args:
-            filtro: 'pagados', 'no_pagados', 'analizados', 'pendientes', None para todos
+            filtro: 'pagados', 'no_pagados', 'analizados', 'pendientes', None para todos (DEPRECADO)
+            filtro_pagado: 'TRUE', 'FALSE', None para todos
+            filtro_analizado: 'TRUE', 'FALSE', None para todos
             limite: Número máximo de leads a retornar
         
         Returns:
@@ -45,6 +49,19 @@ class GoogleSheetsClient:
         """
         
         try:
+            # Construir filtro compatible con la API antigua
+            if filtro_pagado or filtro_analizado:
+                if filtro_pagado == 'TRUE' and filtro_analizado == 'TRUE':
+                    filtro = 'pagados_analizados'
+                elif filtro_pagado == 'TRUE':
+                    filtro = 'pagados'
+                elif filtro_pagado == 'FALSE':
+                    filtro = 'no_pagados'
+                elif filtro_analizado == 'TRUE':
+                    filtro = 'analizados'
+                elif filtro_analizado == 'FALSE':
+                    filtro = 'pendientes'
+            
             params = {
                 'action': 'getLeads',
                 'filtro': filtro or 'todos'
@@ -69,6 +86,14 @@ class GoogleSheetsClient:
                 return []
             
             leads = data.get('leads', [])
+            
+            # Aplicar filtros adicionales en Python si es necesario
+            if filtro_pagado:
+                leads = [lead for lead in leads if str(lead.get('pagado')).upper() == filtro_pagado.upper()]
+            
+            if filtro_analizado:
+                leads = [lead for lead in leads if str(lead.get('analizado')).upper() == filtro_analizado.upper()]
+            
             logger.info(f"✅ Obtenidos {len(leads)} leads")
             
             return leads
