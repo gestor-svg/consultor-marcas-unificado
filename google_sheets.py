@@ -87,12 +87,28 @@ class GoogleSheetsClient:
             
             leads = data.get('leads', [])
             
+            # Normalizar valores booleanos para comparación consistente
+            for lead in leads:
+                # Normalizar 'pagado'
+                pagado_val = str(lead.get('pagado', '')).upper()
+                if pagado_val in ['TRUE', 'SI', 'YES', '1'] or lead.get('pagado') is True:
+                    lead['pagado_normalizado'] = 'TRUE'
+                else:
+                    lead['pagado_normalizado'] = 'FALSE'
+                
+                # Normalizar 'analizado'
+                analizado_val = str(lead.get('analizado', '')).upper()
+                if analizado_val in ['TRUE', 'SI', 'YES', '1'] or lead.get('analizado') is True:
+                    lead['analizado_normalizado'] = 'TRUE'
+                else:
+                    lead['analizado_normalizado'] = 'FALSE'
+            
             # Aplicar filtros adicionales en Python si es necesario
             if filtro_pagado:
-                leads = [lead for lead in leads if str(lead.get('pagado')).upper() == filtro_pagado.upper()]
+                leads = [lead for lead in leads if lead.get('pagado_normalizado') == filtro_pagado.upper()]
             
             if filtro_analizado:
-                leads = [lead for lead in leads if str(lead.get('analizado')).upper() == filtro_analizado.upper()]
+                leads = [lead for lead in leads if lead.get('analizado_normalizado') == filtro_analizado.upper()]
             
             logger.info(f"✅ Obtenidos {len(leads)} leads")
             
