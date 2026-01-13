@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Página no encontrada - {{ NOMBRE_EMPRESA }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full text-center">
+        <div class="mb-8">
+            <i class="fas fa-exclamation-triangle text-yellow-500 text-8xl mb-4"></i>
+            <h1 class="text-6xl font-bold text-gray-900 mb-2">404</h1>
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Página no encontrada</h2>
+            <p class="text-gray-600 mb-8">
+                Lo sentimos, la página que buscas no existe o ha sido movida.
+            </p>
+        </div>
+        
+        <div class="space-y-3">
+            {% if esta_autenticado %}
+            <a href="{{ url_for('dashboard') }}" 
+               class="block w-full btn-primary px-6 py-3 rounded-lg text-white font-semibold text-center">
+                <i class="fas fa-home mr-2"></i>
+                Ir al Dashboard
+            </a>
+            {% else %}
+            <a href="{{ url_for('login') }}" 
+               class="block w-full btn-primary px-6 py-3 rounded-lg text-white font-semibold text-center">
+                <i class="fas fa-sign-in-alt mr-2"></i>
+                Ir al Login
+            </a>
+            {% endif %}
+            
+            <button onclick="history.back()" 
+                    class="block w-full bg-gray-200 hover:bg-gray-300 px-6 py-3 rounded-lg text-gray-700 font-semibold transition">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Volver Atrás
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}

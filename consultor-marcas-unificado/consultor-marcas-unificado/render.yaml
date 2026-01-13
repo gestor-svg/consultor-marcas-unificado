@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: consultor-marcas-interna
+    env: docker
+    plan: starter
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: API_KEY_GEMINI
+        sync: false
+      - key: PASSWORD_INTERNA
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: PORT
+        value: "10000"

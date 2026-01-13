@@ -1,0 +1,502 @@
+{% extends "base.html" %}
+
+{% block title %}Revisión: {{ lead.marca }} - {{ NOMBRE_EMPRESA }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6" id="app">
+    
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-sm p-6">
+        <a href="{{ url_for('dashboard') }}" class="text-purple-600 hover:text-purple-700 mb-4 inline-block">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Volver al Dashboard
+        </a>
+        
+        <h1 class="text-3xl font-bold text-gray-900 mt-4">
+            <i class="fas fa-clipboard-check text-purple-600 mr-3"></i>
+            Revisión y Generación de Reporte
+        </h1>
+        
+        <div class="mt-4 flex items-center gap-4">
+            <div>
+                <p class="text-sm text-gray-600">Cliente</p>
+                <p class="text-lg font-semibold text-gray-900">{{ lead.nombre }}</p>
+            </div>
+            <div class="border-l border-gray-300 pl-4">
+                <p class="text-sm text-gray-600">Marca</p>
+                <p class="text-lg font-bold text-purple-600">{{ lead.marca }}</p>
+            </div>
+            <div class="border-l border-gray-300 pl-4">
+                <p class="text-sm text-gray-600">Clase</p>
+                <p class="text-lg font-semibold text-gray-900">{{ lead.clase_sugerida }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading inicial -->
+    <div id="loading-inicial" class="bg-white rounded-lg shadow-sm p-12 text-center">
+        <div class="loading mx-auto mb-4" style="width: 40px; height: 40px; border-width: 4px;"></div>
+        <p class="text-gray-600">Cargando datos del análisis...</p>
+    </div>
+    
+    <!-- Contenido principal (oculto inicialmente) -->
+    <div id="contenido-revision" class="hidden space-y-6">
+        
+        <!-- Viabilidad -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">
+                <i class="fas fa-percentage text-purple-600 mr-2"></i>
+                Porcentaje de Viabilidad
+            </h2>
+            
+            <!-- Sugerencia de IA -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-blue-900">Sugerencia de IA (Gemini)</p>
+                        <p id="viabilidad-ia" class="text-3xl font-bold text-blue-600 mt-1"></p>
+                    </div>
+                    <div>
+                        <span id="badge-nivel-riesgo" class="badge"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Ajuste manual -->
+            <div class="bg-gray-50 rounded-lg p-6">
+                <label class="block text-sm font-medium text-gray-900 mb-4">
+                    <i class="fas fa-sliders-h mr-2 text-purple-600"></i>
+                    Ajustar manualmente (opcional)
+                </label>
+                
+                <div class="flex items-center gap-6">
+                    <span class="text-2xl font-bold text-gray-400">0%</span>
+                    <input type="range" 
+                           id="slider-viabilidad" 
+                           min="0" 
+                           max="85" 
+                           value="50"
+                           class="flex-1 h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                           style="background: linear-gradient(to right, #667eea 0%, #764ba2 100%);">
+                    <span class="text-2xl font-bold text-purple-600">85%</span>
+                </div>
+                
+                <div class="mt-4 text-center">
+                    <p class="text-sm text-gray-600 mb-2">Valor ajustado</p>
+                    <p id="valor-ajustado" class="text-5xl font-bold text-purple-600">65%</p>
+                    <p id="categoria-viabilidad" class="text-lg font-semibold text-gray-700 mt-2"></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Marcas similares -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">
+                <i class="fas fa-list text-purple-600 mr-2"></i>
+                Marcas Similares Encontradas
+            </h2>
+            
+            <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                <p class="text-sm text-gray-700">
+                    <span class="font-semibold">Total registros IMPI:</span>
+                    <span id="total-marcas" class="text-purple-600 font-bold text-lg ml-2"></span>
+                </p>
+            </div>
+            
+            <div id="tabla-marcas-container" class="overflow-x-auto">
+                <!-- La tabla se insertará dinámicamente -->
+            </div>
+        </div>
+        
+        <!-- Análisis de IA -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">
+                <i class="fas fa-brain text-purple-600 mr-2"></i>
+                Análisis Mejorado por IA
+            </h2>
+            
+            <div id="analisis-texto" class="prose max-w-none text-gray-700 bg-gray-50 rounded-lg p-6">
+                <!-- El análisis se insertará aquí como textarea editable -->
+            </div>
+            
+            <!-- Factores -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div>
+                    <h3 class="font-semibold text-red-900 mb-3 flex items-center">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        Factores de Riesgo
+                    </h3>
+                    <textarea id="factores-riesgo-editable" 
+                              rows="6" 
+                              class="w-full px-4 py-3 border border-red-200 bg-red-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition text-sm"
+                              placeholder="• Factor de riesgo 1
+• Factor de riesgo 2
+• Factor de riesgo 3"></textarea>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-green-900 mb-3 flex items-center">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Factores Favorables
+                    </h3>
+                    <textarea id="factores-favorables-editable" 
+                              rows="6" 
+                              class="w-full px-4 py-3 border border-green-200 bg-green-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition text-sm"
+                              placeholder="• Factor favorable 1
+• Factor favorable 2
+• Factor favorable 3"></textarea>
+                </div>
+            </div>
+            
+            <!-- Recomendaciones -->
+            <div class="mt-6">
+                <h3 class="font-semibold text-purple-900 mb-3 flex items-center">
+                    <i class="fas fa-lightbulb mr-2"></i>
+                    Recomendaciones
+                </h3>
+                <textarea id="recomendaciones-editable" 
+                          rows="6" 
+                          class="w-full px-4 py-3 border border-purple-200 bg-purple-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition text-sm"
+                          placeholder="1. Recomendación 1
+2. Recomendación 2
+3. Recomendación 3"></textarea>
+            </div>
+        </div>
+        
+        <!-- Notas del experto -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">
+                <i class="fas fa-sticky-note text-purple-600 mr-2"></i>
+                Notas del Experto
+            </h2>
+            
+            <textarea id="notas-experto" 
+                      rows="5" 
+                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+                      placeholder="Agrega observaciones adicionales, consideraciones especiales, o cualquier nota que consideres importante incluir en el reporte..."></textarea>
+        </div>
+        
+        <!-- Acciones -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex gap-4 justify-end">
+                <button onclick="volverAtras()" 
+                        class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Volver
+                </button>
+                <button onclick="generarPDF()" 
+                        id="btn-generar-pdf"
+                        class="btn-primary px-8 py-3 rounded-lg text-white font-semibold inline-flex items-center">
+                    <i class="fas fa-file-pdf mr-2"></i>
+                    Generar Reporte PDF
+                </button>
+            </div>
+        </div>
+        
+        <!-- Modal de generación -->
+        <div id="modal-generando" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+                <div class="text-center">
+                    <div class="loading mx-auto mb-4" style="width: 50px; height: 50px; border-width: 5px;"></div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Generando PDF...</h3>
+                    <p class="text-gray-600">Por favor espera mientras se crea el reporte profesional</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal de éxito -->
+        <div id="modal-exito" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+                <div class="text-center">
+                    <i class="fas fa-check-circle text-green-500 text-6xl mb-4"></i>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">¡PDF Generado!</h3>
+                    <p class="text-gray-600 mb-6">El reporte se ha creado exitosamente</p>
+                    
+                    <div class="space-y-3">
+                        <button onclick="descargarPDF()" 
+                                class="w-full btn-primary px-6 py-3 rounded-lg text-white font-semibold">
+                            <i class="fas fa-download mr-2"></i>
+                            Descargar PDF
+                        </button>
+                        <button onclick="aprobarYEnviar()" 
+                                class="w-full bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg text-white font-semibold transition">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            Aprobar y Enviar al Cliente
+                        </button>
+                        <button onclick="volverDashboard()" 
+                                class="w-full bg-gray-200 hover:bg-gray-300 px-6 py-3 rounded-lg text-gray-700 font-semibold transition">
+                            <i class="fas fa-home mr-2"></i>
+                            Volver al Dashboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const lead = {{ lead|tojson }};
+let resultadoBusqueda = null;
+let analisisGemini = null;
+let pdfGenerado = null;
+
+// Cargar datos del análisis
+window.addEventListener('DOMContentLoaded', () => {
+    try {
+        resultadoBusqueda = JSON.parse(sessionStorage.getItem('resultadoBusqueda'));
+        analisisGemini = JSON.parse(sessionStorage.getItem('analisisGemini'));
+        
+        if (!resultadoBusqueda || !analisisGemini) {
+            alert('No se encontraron datos del análisis. Redirigiendo...');
+            window.location.href = "{{ url_for('iniciar_analisis', lead_id=lead.id) }}?auto=true";
+            return;
+        }
+        
+        cargarDatosEnPagina();
+        document.getElementById('loading-inicial').classList.add('hidden');
+        document.getElementById('contenido-revision').classList.remove('hidden');
+        
+    } catch (error) {
+        console.error('Error cargando datos:', error);
+        alert('Error cargando datos del análisis');
+    }
+});
+
+function cargarDatosEnPagina() {
+    // Viabilidad
+    const viabilidadIA = analisisGemini.porcentaje_viabilidad;
+    document.getElementById('viabilidad-ia').textContent = viabilidadIA + '%';
+    document.getElementById('slider-viabilidad').value = viabilidadIA;
+    document.getElementById('valor-ajustado').textContent = viabilidadIA + '%';
+    
+    // Nivel de riesgo
+    const nivelRiesgo = analisisGemini.nivel_riesgo;
+    const badgeNivel = document.getElementById('badge-nivel-riesgo');
+    badgeNivel.textContent = 'Riesgo: ' + nivelRiesgo;
+    badgeNivel.className = 'badge ' + (
+        nivelRiesgo === 'BAJO' ? 'badge-success' :
+        nivelRiesgo === 'MEDIO' ? 'badge-warning' :
+        'badge-danger'
+    );
+    
+    actualizarCategoriaViabilidad(viabilidadIA);
+    
+    // Marcas similares
+    document.getElementById('total-marcas').textContent = resultadoBusqueda.total_registros;
+    
+    // Obtener marcas ordenadas de Gemini o usar las del IMPI
+    let marcas = [];
+    if (analisisGemini.marcas_conflictivas && analisisGemini.marcas_conflictivas.length > 0) {
+        // Usar las ordenadas por Gemini pero enriquecerlas con datos completos del IMPI
+        marcas = analisisGemini.marcas_conflictivas.slice(0, 15).map(marcaConflictiva => {
+            // Buscar la marca completa en los resultados del IMPI
+            const marcaCompleta = resultadoBusqueda.marcas_similares.find(
+                m => m.expediente === marcaConflictiva.expediente ||
+                     m.denominacion === marcaConflictiva.denominacion
+            );
+            
+            // Si la encontramos, usar datos completos; si no, usar lo que tenemos
+            return marcaCompleta || marcaConflictiva;
+        });
+    } else {
+        // Fallback a las del IMPI
+        marcas = resultadoBusqueda.marcas_similares.slice(0, 15);
+    }
+    
+    let tablaHTML = '<table class="min-w-full divide-y divide-gray-200">';
+    tablaHTML += '<thead class="bg-gray-100"><tr>';
+    tablaHTML += '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>';
+    tablaHTML += '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Denominación</th>';
+    tablaHTML += '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Expediente</th>';
+    tablaHTML += '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Registro</th>';
+    tablaHTML += '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Clase</th>';
+    tablaHTML += '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Titular</th>';
+    tablaHTML += '</tr></thead><tbody class="bg-white divide-y divide-gray-200">';
+    
+    marcas.forEach((marca, i) => {
+        tablaHTML += `<tr class="hover:bg-gray-50">`;
+        tablaHTML += `<td class="px-4 py-3 text-sm text-gray-900">${i + 1}</td>`;
+        tablaHTML += `<td class="px-4 py-3 text-sm font-medium text-gray-900">${marca.denominacion}</td>`;
+        tablaHTML += `<td class="px-4 py-3 text-sm text-gray-600">${marca.expediente}</td>`;
+        tablaHTML += `<td class="px-4 py-3 text-sm text-gray-600">${marca.registro || '-'}</td>`;
+        tablaHTML += `<td class="px-4 py-3 text-sm"><span class="badge badge-info">${marca.clase}</span></td>`;
+        tablaHTML += `<td class="px-4 py-3 text-sm text-gray-600">${marca.titular.substring(0, 40)}...</td>`;
+        tablaHTML += `</tr>`;
+    });
+    
+    tablaHTML += '</tbody></table>';
+    
+    if (resultadoBusqueda.marcas_similares.length > 15) {
+        tablaHTML += `<p class="text-sm text-gray-500 mt-3 text-center">... y ${resultadoBusqueda.marcas_similares.length - 15} marcas más</p>`;
+    }
+    
+    document.getElementById('tabla-marcas-container').innerHTML = tablaHTML;
+    
+    // Análisis - EDITABLE
+    document.getElementById('analisis-texto').innerHTML = `
+        <textarea id="analisis-editable" 
+                  rows="10" 
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+                  placeholder="Edita el análisis de Gemini aquí...">${analisisGemini.analisis_detallado}</textarea>
+    `;
+    
+    // Factores de riesgo - Llenar textarea editable
+    if (analisisGemini.factores_riesgo && analisisGemini.factores_riesgo.length > 0) {
+        const textRiesgo = analisisGemini.factores_riesgo.map(f => `• ${f}`).join('\n');
+        document.getElementById('factores-riesgo-editable').value = textRiesgo;
+    }
+    
+    // Factores favorables - Llenar textarea editable
+    if (analisisGemini.factores_favorables && analisisGemini.factores_favorables.length > 0) {
+        const textFavorable = analisisGemini.factores_favorables.map(f => `• ${f}`).join('\n');
+        document.getElementById('factores-favorables-editable').value = textFavorable;
+    }
+    
+    // Recomendaciones - Llenar textarea editable
+    if (analisisGemini.recomendaciones && analisisGemini.recomendaciones.length > 0) {
+        const textRecomendaciones = analisisGemini.recomendaciones.map((r, i) => `${i + 1}. ${r}`).join('\n');
+        document.getElementById('recomendaciones-editable').value = textRecomendaciones;
+    }
+}
+
+// Slider de viabilidad
+document.addEventListener('DOMContentLoaded', () => {
+    const slider = document.getElementById('slider-viabilidad');
+    if (slider) {
+        slider.addEventListener('input', (e) => {
+            const valor = e.target.value;
+            document.getElementById('valor-ajustado').textContent = valor + '%';
+            actualizarCategoriaViabilidad(parseInt(valor));
+            
+            // Actualizar el porcentaje en el textarea del análisis si existe
+            const textareaAnalisis = document.getElementById('analisis-editable');
+            if (textareaAnalisis) {
+                // Reemplazar cualquier mención del porcentaje en el texto
+                let texto = textareaAnalisis.value;
+                texto = texto.replace(/\b\d+%/g, valor + '%');
+                textareaAnalisis.value = texto;
+            }
+        });
+    }
+});
+
+function actualizarCategoriaViabilidad(porcentaje) {
+    let categoria, color;
+    
+    if (porcentaje <= 25) {
+        categoria = 'MUY BAJA - No recomendado';
+        color = 'text-red-600';
+    } else if (porcentaje <= 50) {
+        categoria = 'BAJA - Riesgoso';
+        color = 'text-orange-600';
+    } else if (porcentaje <= 65) {
+        categoria = 'MEDIA - Posible con cambios';
+        color = 'text-yellow-600';
+    } else {
+        categoria = 'ALTA - Recomendado';
+        color = 'text-green-600';
+    }
+    
+    const elem = document.getElementById('categoria-viabilidad');
+    elem.textContent = categoria;
+    elem.className = `text-lg font-semibold mt-2 ${color}`;
+}
+
+async function generarPDF() {
+    try {
+        document.getElementById('modal-generando').classList.remove('hidden');
+        
+        const porcentajeAjustado = parseInt(document.getElementById('slider-viabilidad').value);
+        const notasExperto = document.getElementById('notas-experto').value;
+        
+        // Obtener todos los campos editables
+        const analisisEditado = document.getElementById('analisis-editable') ? 
+                               document.getElementById('analisis-editable').value : 
+                               analisisGemini.analisis_detallado;
+        
+        const factoresRiesgoEditado = document.getElementById('factores-riesgo-editable') ?
+                                     document.getElementById('factores-riesgo-editable').value.split('\n').filter(l => l.trim()) :
+                                     analisisGemini.factores_riesgo;
+        
+        const factoresFavorablesEditado = document.getElementById('factores-favorables-editable') ?
+                                         document.getElementById('factores-favorables-editable').value.split('\n').filter(l => l.trim()) :
+                                         analisisGemini.factores_favorables;
+        
+        const recomendacionesEditado = document.getElementById('recomendaciones-editable') ?
+                                      document.getElementById('recomendaciones-editable').value.split('\n').filter(l => l.trim()) :
+                                      analisisGemini.recomendaciones;
+        
+        // Actualizar el análisis con todos los campos editados
+        const analisisActualizado = {
+            ...analisisGemini,
+            analisis_detallado: analisisEditado,
+            factores_riesgo: factoresRiesgoEditado,
+            factores_favorables: factoresFavorablesEditado,
+            recomendaciones: recomendacionesEditado
+        };
+        
+        const response = await fetch('/api/generar-pdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: lead.email,
+                porcentaje_viabilidad: porcentajeAjustado,
+                analisis: analisisActualizado,
+                resultado_busqueda: resultadoBusqueda,
+                notas_experto: notasExperto
+            })
+        });
+        
+        const data = await response.json();
+        
+        document.getElementById('modal-generando').classList.add('hidden');
+        
+        if (!response.ok || data.error) {
+            throw new Error(data.mensaje || 'Error generando PDF');
+        }
+        
+        pdfGenerado = data;
+        document.getElementById('modal-exito').classList.remove('hidden');
+        
+    } catch (error) {
+        document.getElementById('modal-generando').classList.add('hidden');
+        alert('Error generando PDF: ' + error.message);
+    }
+}
+
+function descargarPDF() {
+    if (pdfGenerado && pdfGenerado.pdf_url) {
+        window.open(pdfGenerado.pdf_url, '_blank');
+    }
+}
+
+async function aprobarYEnviar() {
+    try {
+        const response = await fetch('/api/aprobar-pdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: lead.email })
+        });
+        
+        if (response.ok) {
+            alert('✅ PDF aprobado y marcado como listo para enviar');
+            volverDashboard();
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+function volverAtras() {
+    window.history.back();
+}
+
+function volverDashboard() {
+    window.location.href = "{{ url_for('dashboard') }}";
+}
+</script>
+{% endblock %}

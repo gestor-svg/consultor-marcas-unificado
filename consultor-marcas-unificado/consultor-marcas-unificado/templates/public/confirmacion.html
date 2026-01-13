@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmación | MarcaSegura</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 50px 40px;
+            text-align: center;
+        }
+
+        .logo {
+            width: 300px;
+            height: 200px;
+            margin: 0 auto 20px;
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        h1 {
+            color: #1a202c;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .success-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            color: #2d3748;
+            font-size: 18px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .section {
+            background: #f7fafc;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .section h2 {
+            color: #1a202c;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        .calendario-container {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+
+        .calendario-container iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-whatsapp {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+        }
+
+        .btn-whatsapp:hover {
+            box-shadow: 0 10px 25px rgba(37, 211, 102, 0.4);
+        }
+
+        .info-text {
+            color: #718096;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 25px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            .logo {
+                width: 250px;
+                height: 167px;
+            }
+            .calendario-container iframe {
+                height: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="/static/logo.png" alt="MarcaSegura">
+        </div>
+        
+        <div class="success-icon">🎉</div>
+        
+        <h1>¡Pago Confirmado!</h1>
+        
+        <p class="message">
+            Gracias por tu compra. Tu Examen de Viabilidad está en proceso.<br>
+            Agenda tu asesoría personalizada a continuación.
+        </p>
+
+        <div class="section">
+            <h2>📅 Agenda tu Asesoría</h2>
+            <p style="color: #718096; margin-bottom: 15px;">
+                Selecciona el horario que mejor te convenga para tu videollamada de 30 minutos.
+            </p>
+            <div class="calendario-container">
+                <iframe src="https://cal.com/marcasegura/30min?embed=true&theme=light&email={{ email_cliente }}&name={{ nombre_cliente }}" frameborder="0" allowfullscreen></iframe>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>💬 ¿Tienes dudas?</h2>
+            <p style="color: #718096; margin-bottom: 15px;">
+                Contáctanos por WhatsApp para cualquier pregunta.
+            </p>
+            <a href="{{ whatsapp_link }}" target="_blank" class="btn btn-whatsapp">
+                💬 Enviar WhatsApp
+            </a>
+        </div>
+
+        <p class="info-text">
+            Recibirás tu reporte por correo electrónico en las próximas 24-48 horas hábiles.
+        </p>
+    </div>
+</body>
+</html>

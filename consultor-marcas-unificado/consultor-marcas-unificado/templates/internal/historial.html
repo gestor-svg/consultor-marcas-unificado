@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Historial - {{ NOMBRE_EMPRESA }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-sm p-6">
+        <h1 class="text-3xl font-bold text-gray-900">
+            <i class="fas fa-history text-purple-600 mr-3"></i>
+            Historial de Análisis
+        </h1>
+        <p class="text-gray-600 mt-2">Reportes generados y enviados a clientes</p>
+    </div>
+    
+    <!-- Lista de análisis -->
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        {% if leads %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Fecha Análisis
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Cliente
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Marca
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Viabilidad
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Estado
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Acciones
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for lead in leads %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if lead.fecha_analisis %}
+                                {{ lead.fecha_analisis }}
+                            {% else %}
+                                {{ lead.fecha }}
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ lead.nombre }}</div>
+                            <div class="text-sm text-gray-500">{{ lead.email }}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-semibold text-gray-900">{{ lead.marca }}</div>
+                            <div class="text-xs text-gray-500">Clase {{ lead.clase_sugerida }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if lead.porcentaje_viabilidad %}
+                                {% set porcentaje = lead.porcentaje_viabilidad|int %}
+                                <div class="flex items-center">
+                                    <span class="text-2xl font-bold 
+                                        {% if porcentaje <= 25 %}text-red-600
+                                        {% elif porcentaje <= 50 %}text-orange-600
+                                        {% elif porcentaje <= 65 %}text-yellow-600
+                                        {% else %}text-green-600
+                                        {% endif %}">
+                                        {{ porcentaje }}%
+                                    </span>
+                                </div>
+                            {% else %}
+                                <span class="text-gray-400">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if lead.enviado_cliente == 'TRUE' %}
+                                <span class="badge badge-success">
+                                    <i class="fas fa-paper-plane mr-1"></i>
+                                    Enviado
+                                </span>
+                            {% elif lead.aprobado == 'TRUE' %}
+                                <span class="badge badge-info">
+                                    <i class="fas fa-check mr-1"></i>
+                                    Aprobado
+                                </span>
+                            {% else %}
+                                <span class="badge badge-warning">
+                                    <i class="fas fa-file-pdf mr-1"></i>
+                                    Generado
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex justify-end gap-2">
+                                {% if lead.pdf_url %}
+                                <a href="{{ lead.pdf_url }}" 
+                                   target="_blank"
+                                   class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs leading-4 font-medium rounded text-white bg-purple-600 hover:bg-purple-700 transition"
+                                   title="Ver PDF">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ lead.pdf_url }}" 
+                                   download
+                                   class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs leading-4 font-medium rounded text-white bg-blue-600 hover:bg-blue-700 transition"
+                                   title="Descargar">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                                {% endif %}
+                                
+                                {% if lead.enviado_cliente != 'TRUE' %}
+                                <button onclick="enviarAlCliente('{{ lead.email }}')" 
+                                        class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs leading-4 font-medium rounded text-white bg-green-600 hover:bg-green-700 transition"
+                                        title="Enviar al cliente">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="px-6 py-12 text-center">
+            <i class="fas fa-inbox text-gray-300 text-6xl mb-4"></i>
+            <p class="text-gray-500 text-lg">No hay análisis completados aún</p>
+            <a href="{{ url_for('dashboard') }}" 
+               class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 transition">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Ir al Dashboard
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function enviarAlCliente(email) {
+    if (!confirm('¿Enviar el reporte al cliente por email?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/enviar-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                email: email,
+                pdf_filename: 'reporte.pdf' // Se ajustará según el archivo real
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert('✅ Email enviado exitosamente');
+            location.reload();
+        } else {
+            alert('❌ Error: ' + (data.mensaje || 'Error enviando email'));
+        }
+    } catch (error) {
+        alert('❌ Error: ' + error.message);
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}Analizar: {{ lead.marca }} - {{ NOMBRE_EMPRESA }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header con info del cliente -->
+    <div class="bg-white rounded-lg shadow-sm p-6">
+        <a href="{{ url_for('dashboard') }}" class="text-purple-600 hover:text-purple-700 mb-4 inline-block">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Volver al Dashboard
+        </a>
+        
+        <h1 class="text-3xl font-bold text-gray-900 mt-4">
+            <i class="fas fa-search text-purple-600 mr-3"></i>
+            Análisis de Marca
+        </h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            <div>
+                <p class="text-sm text-gray-600">Cliente</p>
+                <p class="text-lg font-semibold text-gray-900">{{ lead.nombre }}</p>
+                <p class="text-sm text-gray-500">{{ lead.email }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Marca a analizar</p>
+                <p class="text-2xl font-bold text-purple-600">{{ lead.marca }}</p>
+                <p class="text-sm text-gray-500">Clase Niza: {{ lead.clase_sugerida }}</p>
+            </div>
+        </div>
+        
+        {% if lead.descripcion %}
+        <div class="mt-4">
+            <p class="text-sm text-gray-600">Descripción del producto/servicio</p>
+            <p class="text-gray-700">{{ lead.descripcion }}</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Área de análisis -->
+    <div class="bg-white rounded-lg shadow-sm p-6">
+        <div id="analisis-container">
+            
+            <!-- Paso 1: Inicio -->
+            <div id="paso-inicio" class="text-center py-12">
+                <i class="fas fa-play-circle text-purple-600 text-6xl mb-4"></i>
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Listo para iniciar análisis</h2>
+                <p class="text-gray-600 mb-6">
+                    Se realizará una búsqueda fonética en el IMPI y posteriormente un análisis con IA
+                </p>
+                <button onclick="iniciarAnalisis()" 
+                        class="btn-primary px-8 py-3 rounded-lg text-white font-semibold inline-flex items-center">
+                    <i class="fas fa-rocket mr-2"></i>
+                    Iniciar Análisis Completo
+                </button>
+            </div>
+            
+            <!-- Paso 2: Búsqueda IMPI -->
+            <div id="paso-impi" class="hidden">
+                <div class="text-center py-8">
+                    <div class="inline-block p-4 bg-purple-100 rounded-full mb-4">
+                        <i class="fas fa-search text-purple-600 text-4xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">Búsqueda en IMPI</h2>
+                    <p class="text-gray-600 mb-6">Buscando marcas fonéticamente similares...</p>
+                    
+                    <div class="w-full bg-gray-200 rounded-full h-3 mb-4">
+                        <div id="progress-impi" class="bg-purple-600 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    
+                    <p id="status-impi" class="text-sm text-gray-500">Conectando con IMPI...</p>
+                </div>
+            </div>
+            
+            <!-- Paso 3: Análisis Gemini -->
+            <div id="paso-gemini" class="hidden">
+                <div class="text-center py-8">
+                    <div class="inline-block p-4 bg-pink-100 rounded-full mb-4">
+                        <i class="fas fa-brain text-pink-600 text-4xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">Análisis con IA</h2>
+                    <p class="text-gray-600 mb-6">Gemini está analizando los resultados...</p>
+                    
+                    <div class="w-full bg-gray-200 rounded-full h-3 mb-4">
+                        <div id="progress-gemini" class="bg-gradient-to-r from-pink-500 to-purple-600 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    
+                    <p id="status-gemini" class="text-sm text-gray-500">Procesando con Gemini...</p>
+                </div>
+            </div>
+            
+            <!-- Paso 4: Resultados -->
+            <div id="paso-resultados" class="hidden">
+                <div class="text-center py-8">
+                    <div class="inline-block p-4 bg-green-100 rounded-full mb-4">
+                        <i class="fas fa-check-circle text-green-600 text-4xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">¡Análisis Completado!</h2>
+                    <p class="text-gray-600 mb-6">Los resultados están listos para revisión</p>
+                    
+                    <button onclick="irARevision()" 
+                            class="btn-primary px-8 py-3 rounded-lg text-white font-semibold inline-flex items-center">
+                        <i class="fas fa-arrow-right mr-2"></i>
+                        Ver Resultados y Revisar
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Paso 5: Error -->
+            <div id="paso-error" class="hidden">
+                <div class="text-center py-8">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-6xl mb-4"></i>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">Error en el Análisis</h2>
+                    <p id="mensaje-error" class="text-gray-600 mb-6"></p>
+                    
+                    <button onclick="location.reload()" 
+                            class="bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg text-white font-semibold inline-flex items-center transition">
+                        <i class="fas fa-redo mr-2"></i>
+                        Intentar Nuevamente
+                    </button>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const lead = {{ lead|tojson }};
+let resultadoBusqueda = null;
+let analisisGemini = null;
+
+function mostrarPaso(paso) {
+    document.querySelectorAll('[id^="paso-"]').forEach(el => el.classList.add('hidden'));
+    document.getElementById('paso-' + paso).classList.remove('hidden');
+}
+
+function actualizarProgreso(elementId, porcentaje) {
+    document.getElementById(elementId).style.width = porcentaje + '%';
+}
+
+function actualizarStatus(elementId, texto) {
+    document.getElementById(elementId).textContent = texto;
+}
+
+async function iniciarAnalisis() {
+    try {
+        // Paso 1: Búsqueda IMPI
+        mostrarPaso('impi');
+        actualizarProgreso('progress-impi', 10);
+        actualizarStatus('status-impi', 'Conectando con IMPI...');
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
+        actualizarProgreso('progress-impi', 30);
+        actualizarStatus('status-impi', 'Ejecutando búsqueda fonética...');
+        
+        const responseIMPI = await fetch('/api/buscar-impi', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                marca: lead.marca,
+                clase: lead.clase_sugerida
+            })
+        });
+        
+        actualizarProgreso('progress-impi', 70);
+        
+        const dataIMPI = await responseIMPI.json();
+        
+        if (!responseIMPI.ok || dataIMPI.error) {
+            throw new Error(dataIMPI.mensaje || 'Error en búsqueda IMPI');
+        }
+        
+        resultadoBusqueda = dataIMPI.resultado;
+        
+        actualizarProgreso('progress-impi', 100);
+        actualizarStatus('status-impi', `✓ Búsqueda completada: ${resultadoBusqueda.total_registros} marcas encontradas`);
+        
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Paso 2: Análisis Gemini
+        mostrarPaso('gemini');
+        actualizarProgreso('progress-gemini', 10);
+        actualizarStatus('status-gemini', 'Preparando análisis con IA...');
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
+        actualizarProgreso('progress-gemini', 30);
+        actualizarStatus('status-gemini', 'Gemini está procesando...');
+        
+        const responseGemini = await fetch('/api/analizar-gemini', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                resultado_busqueda: resultadoBusqueda,
+                descripcion: lead.descripcion
+            })
+        });
+        
+        actualizarProgreso('progress-gemini', 70);
+        
+        const dataGemini = await responseGemini.json();
+        
+        if (!responseGemini.ok || dataGemini.error) {
+            throw new Error(dataGemini.mensaje || 'Error en análisis Gemini');
+        }
+        
+        analisisGemini = dataGemini.analisis;
+        
+        actualizarProgreso('progress-gemini', 100);
+        actualizarStatus('status-gemini', '✓ Análisis completado exitosamente');
+        
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Guardar en sessionStorage para la siguiente página
+        sessionStorage.setItem('resultadoBusqueda', JSON.stringify(resultadoBusqueda));
+        sessionStorage.setItem('analisisGemini', JSON.stringify(analisisGemini));
+        
+        // Mostrar resultados
+        mostrarPaso('resultados');
+        
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('mensaje-error').textContent = error.message;
+        mostrarPaso('error');
+    }
+}
+
+function irARevision() {
+    // Redirigir a página de revisión
+    window.location.href = "{{ url_for('revision', lead_id=lead.id) }}";
+}
+
+// Auto-iniciar si viene con parámetro
+if (window.location.search.includes('auto=true')) {
+    setTimeout(() => iniciarAnalisis(), 500);
+}
+</script>
+{% endblock %}

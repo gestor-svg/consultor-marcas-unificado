@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Login - {{ NOMBRE_EMPRESA }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <!-- Logo y título -->
+        <div class="text-center">
+            <div class="flex justify-center mb-4">
+                <div class="bg-gradient-to-r from-purple-600 to-pink-600 p-4 rounded-full">
+                    <i class="fas fa-shield-alt text-white text-5xl"></i>
+                </div>
+            </div>
+            <h2 class="text-4xl font-extrabold text-gray-900 mb-2">
+                {{ NOMBRE_EMPRESA }}
+            </h2>
+            <p class="text-lg text-gray-600">
+                Sistema Interno de Análisis de Marcas
+            </p>
+        </div>
+        
+        <!-- Formulario de login -->
+        <div class="mt-8 bg-white py-8 px-6 shadow-xl rounded-lg">
+            <form class="space-y-6" method="POST" action="{{ url_for('login') }}">
+                <div>
+                    <label for="usuario" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-user mr-2 text-purple-600"></i>
+                        Usuario
+                    </label>
+                    <input id="usuario" 
+                           name="usuario" 
+                           type="text" 
+                           required 
+                           class="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                           placeholder="Ingresa tu usuario">
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-lock mr-2 text-purple-600"></i>
+                        Contraseña
+                    </label>
+                    <input id="password" 
+                           name="password" 
+                           type="password" 
+                           required 
+                           class="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                           placeholder="Ingresa tu contraseña">
+                </div>
+                
+                <div>
+                    <button type="submit" 
+                            class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white btn-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                        <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                            <i class="fas fa-sign-in-alt text-purple-300 group-hover:text-purple-200"></i>
+                        </span>
+                        Iniciar Sesión
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Info adicional -->
+        <div class="text-center">
+            <p class="text-sm text-gray-600">
+                <i class="fas fa-info-circle mr-1"></i>
+                Sistema protegido. Solo usuarios autorizados.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

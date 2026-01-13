@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - {{ NOMBRE_EMPRESA }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-sm p-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">
+                    <i class="fas fa-chart-line text-purple-600 mr-3"></i>
+                    Dashboard
+                </h1>
+                <p class="text-gray-600 mt-2">Gestión de leads y análisis de marcas</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="abrirModalNuevoLead()" 
+                        class="btn-primary px-6 py-3 rounded-lg text-white font-semibold inline-flex items-center">
+                    <i class="fas fa-plus mr-2"></i>
+                    Nuevo Lead
+                </button>
+                <div class="text-right">
+                    <p class="text-sm text-gray-500">Sistema Interno</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Estadísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <!-- Total -->
+        <div class="bg-white rounded-lg shadow-sm p-6 card">
+            <div class="flex items-center">
+                <div class="bg-blue-100 rounded-full p-3 mr-4">
+                    <i class="fas fa-users text-blue-600 text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 uppercase tracking-wide">Total Leads</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ stats.total or 0 }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pagados -->
+        <div class="bg-white rounded-lg shadow-sm p-6 card">
+            <div class="flex items-center">
+                <div class="bg-green-100 rounded-full p-3 mr-4">
+                    <i class="fas fa-dollar-sign text-green-600 text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 uppercase tracking-wide">Pagados</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ stats.pagados or 0 }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pendientes -->
+        <div class="bg-white rounded-lg shadow-sm p-6 card">
+            <div class="flex items-center">
+                <div class="bg-yellow-100 rounded-full p-3 mr-4">
+                    <i class="fas fa-clock text-yellow-600 text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 uppercase tracking-wide">Pendientes</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ stats.pendientes or 0 }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Analizados -->
+        <div class="bg-white rounded-lg shadow-sm p-6 card">
+            <div class="flex items-center">
+                <div class="bg-purple-100 rounded-full p-3 mr-4">
+                    <i class="fas fa-check-circle text-purple-600 text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 uppercase tracking-wide">Analizados</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ stats.analizados or 0 }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filtros -->
+    <div class="bg-white rounded-lg shadow-sm p-6">
+        <div class="flex flex-wrap gap-3">
+            <a href="{{ url_for('dashboard', filtro='todos') }}" 
+               class="px-4 py-2 rounded-lg transition {% if filtro_actual == 'todos' %}bg-purple-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                <i class="fas fa-list mr-2"></i>
+                Todos
+            </a>
+            <a href="{{ url_for('dashboard', filtro='pagados') }}" 
+               class="px-4 py-2 rounded-lg transition {% if filtro_actual == 'pagados' %}bg-purple-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                <i class="fas fa-check mr-2"></i>
+                Pagados
+            </a>
+            <a href="{{ url_for('dashboard', filtro='no_pagados') }}" 
+               class="px-4 py-2 rounded-lg transition {% if filtro_actual == 'no_pagados' %}bg-purple-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                <i class="fas fa-times mr-2"></i>
+                No Pagados
+            </a>
+            <a href="{{ url_for('dashboard', filtro='pendientes') }}" 
+               class="px-4 py-2 rounded-lg transition {% if filtro_actual == 'pendientes' %}bg-purple-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                <i class="fas fa-hourglass-half mr-2"></i>
+                Pendientes
+            </a>
+            <a href="{{ url_for('dashboard', filtro='analizados') }}" 
+               class="px-4 py-2 rounded-lg transition {% if filtro_actual == 'analizados' %}bg-purple-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                <i class="fas fa-file-pdf mr-2"></i>
+                Analizados
+            </a>
+        </div>
+    </div>
+    
+    <!-- Tabla de Leads -->
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-900">
+                <i class="fas fa-table mr-2 text-purple-600"></i>
+                Leads Recientes
+            </h2>
+        </div>
+        
+        {% if leads %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Fecha
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Cliente
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Marca
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Clase
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Acciones
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for lead in leads %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ lead.fecha }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ lead.nombre }}</div>
+                            <div class="text-sm text-gray-500">{{ lead.email }}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-semibold text-gray-900">{{ lead.marca }}</div>
+                            <div class="text-xs text-gray-500">{{ lead.descripcion[:50] }}...</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <span class="badge badge-info">
+                                Clase {{ lead.clase_sugerida }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if lead.analizado == 'TRUE' or lead.analizado == true %}
+                                <span class="badge badge-success">
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                    Analizado
+                                </span>
+                            {% elif lead.pagado == 'TRUE' or lead.pagado == true %}
+                                <span class="badge badge-warning">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    Pagado
+                                </span>
+                            {% else %}
+                                <span class="badge badge-danger">
+                                    <i class="fas fa-times-circle mr-1"></i>
+                                    No pagado
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            {% if lead.analizado != 'TRUE' and lead.analizado != true %}
+                                <!-- Mostrar botón Analizar si NO está analizado -->
+                                <a href="{{ url_for('iniciar_analisis', lead_id=lead.id) }}" 
+                                   class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 transition">
+                                    <i class="fas fa-search mr-2"></i>
+                                    Analizar
+                                </a>
+                            {% elif (lead.analizado == 'TRUE' or lead.analizado == true) and lead.pdf_url %}
+                                <!-- Mostrar botón Ver PDF si está analizado -->
+                                <a href="{{ lead.pdf_url }}" 
+                                   class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition">
+                                    <i class="fas fa-file-pdf mr-2"></i>
+                                    Ver PDF
+                                </a>
+                            {% else %}
+                                <span class="text-gray-400 text-sm">
+                                    <i class="fas fa-ban mr-1"></i>
+                                    No disponible
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="px-6 py-12 text-center">
+            <i class="fas fa-inbox text-gray-300 text-6xl mb-4"></i>
+            <p class="text-gray-500 text-lg">No hay leads con el filtro seleccionado</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Modal Nuevo Lead -->
+    <div id="modal-nuevo-lead" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-gray-900">
+                    <i class="fas fa-user-plus text-purple-600 mr-2"></i>
+                    Nuevo Lead Manual
+                </h3>
+                <button onclick="cerrarModalNuevoLead()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            
+            <form id="form-nuevo-lead" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Nombre completo <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="nombre" name="nombre" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                           placeholder="Juan Pérez">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Email <span class="text-red-500">*</span>
+                    </label>
+                    <input type="email" id="email" name="email" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                           placeholder="juan@ejemplo.com">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Teléfono <span class="text-red-500">*</span>
+                    </label>
+                    <input type="tel" id="telefono" name="telefono" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                           placeholder="3312345678">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Marca <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="marca" name="marca" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                           placeholder="Mi Marca">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Tipo de negocio
+                    </label>
+                    <input type="text" id="tipo_negocio" name="tipo_negocio"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                           placeholder="Restaurante, Tienda, Servicio...">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Clase Niza (opcional)
+                    </label>
+                    <input type="number" id="clase_sugerida" name="clase_sugerida" min="1" max="45"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                           placeholder="1-45">
+                </div>
+                
+                <div class="flex gap-3 mt-6">
+                    <button type="button" onclick="cerrarModalNuevoLead()" 
+                            class="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" 
+                            class="flex-1 btn-primary px-4 py-3 rounded-lg text-white font-semibold inline-flex items-center justify-center">
+                        <i class="fas fa-save mr-2"></i>
+                        Crear Lead
+                    </button>
+                </div>
+            </form>
+            
+            <div id="loading-crear-lead" class="hidden text-center py-8">
+                <div class="loading mx-auto mb-4" style="width: 40px; height: 40px; border-width: 4px;"></div>
+                <p class="text-gray-600">Creando lead...</p>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+{% block extra_js %}
+<script>
+function abrirModalNuevoLead() {
+    document.getElementById('modal-nuevo-lead').classList.remove('hidden');
+    document.getElementById('form-nuevo-lead').reset();
+}
+
+function cerrarModalNuevoLead() {
+    document.getElementById('modal-nuevo-lead').classList.add('hidden');
+}
+
+document.getElementById('form-nuevo-lead').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = {
+        nombre: document.getElementById('nombre').value,
+        email: document.getElementById('email').value,
+        telefono: document.getElementById('telefono').value,
+        marca: document.getElementById('marca').value,
+        tipo_negocio: document.getElementById('tipo_negocio').value || '',
+        clase_sugerida: document.getElementById('clase_sugerida').value || ''
+    };
+    
+    try {
+        // Mostrar loading
+        document.getElementById('form-nuevo-lead').classList.add('hidden');
+        document.getElementById('loading-crear-lead').classList.remove('hidden');
+        
+        const response = await fetch('/api/crear-lead', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.mensaje || 'Error creando lead');
+        }
+        
+        // Éxito
+        alert('✅ Lead creado exitosamente');
+        cerrarModalNuevoLead();
+        location.reload(); // Recargar para mostrar el nuevo lead
+        
+    } catch (error) {
+        alert('❌ Error: ' + error.message);
+        document.getElementById('form-nuevo-lead').classList.remove('hidden');
+        document.getElementById('loading-crear-lead').classList.add('hidden');
+    }
+});
+
+// Cerrar modal con ESC
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        cerrarModalNuevoLead();
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

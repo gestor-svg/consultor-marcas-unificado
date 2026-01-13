@@ -1,0 +1,22 @@
+# Dependencias para Consultor de Marcas - VERSIÓN UNIFICADA
+# Sistema público (funnel) + Sistema interno (dashboard)
+
+# Framework web
+Flask>=3.0.0
+gunicorn>=21.2.0
+
+# Scraping y parseo web
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# IA y análisis (Gemini)
+google-generativeai>=1.0.0
+
+# Generación de PDFs
+reportlab>=4.0.0
+Pillow>=10.0.0
+
+# Utilidades
+pytz>=2023.3
+python-dotenv>=1.0.0
