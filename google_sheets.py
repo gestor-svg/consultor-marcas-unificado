@@ -108,6 +108,10 @@ class GoogleSheetsClient:
                     lead['analizado_normalizado'] = 'TRUE'
                 else:
                     lead['analizado_normalizado'] = 'FALSE'
+                
+                # Debug para leads problemáticos
+                if lead.get('id') in [37, 38, 39]:
+                    logger.info(f"[DEBUG] Lead {lead.get('id')}: analizado_raw={analizado_raw} (type={type(analizado_raw)}), normalizado={lead['analizado_normalizado']}")
             
             # Aplicar filtros adicionales en Python si es necesario
             if filtro_pagado:

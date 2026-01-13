@@ -489,9 +489,14 @@ def api_buscar_impi():
         
         return jsonify({
             "success": True,
-            "total_marcas": len(marcas),
-            "marcas": [marca.to_dict() for marca in marcas],
-            "tiempo_busqueda": resultado.tiempo_busqueda
+            "resultado": {
+                "total_registros": resultado.total_registros,
+                "total_marcas": len(marcas),
+                "marcas": [marca.to_dict() for marca in marcas],
+                "tiempo_busqueda": resultado.tiempo_busqueda,
+                "marca_consultada": resultado.marca_consultada,
+                "clase_consultada": resultado.clase_consultada
+            }
         })
         
     except Exception as e:
