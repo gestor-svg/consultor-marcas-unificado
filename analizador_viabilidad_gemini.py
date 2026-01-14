@@ -269,7 +269,7 @@ IMPORTANTE: Las "top_15_conflictivas" deben estar ORDENADAS por riesgo descenden
         resultado: ResultadoBusqueda
     ) -> AnalisisViabilidad:
         """
-        Parsea la respuesta JSON de Gemini
+        Parsea la respuesta JSON de Gemini con reparación automática
         """
         
         try:
@@ -286,8 +286,13 @@ IMPORTANTE: Las "top_15_conflictivas" deben estar ORDENADAS por riesgo descenden
             
             texto = texto.strip()
             
-            # Parsear JSON
-            data = json.loads(texto)
+            # Intentar parsear JSON directamente
+            try:
+                data = json.loads(texto)
+            except json.JSONDecodeError as e:
+                logger.warning(f"JSON incompleto, intentando reparar: {str(e)}")
+                # Intentar reparar JSON incompleto
+                data = self._reparar_json_incompleto(texto)
             
             # Validar porcentaje
             porcentaje = int(data.get('porcentaje_viabilidad', 50))
@@ -314,7 +319,7 @@ IMPORTANTE: Las "top_15_conflictivas" deben estar ORDENADAS por riesgo descenden
         
         except json.JSONDecodeError as e:
             logger.error(f"Error parseando JSON de Gemini: {str(e)}")
-            logger.debug(f"Respuesta: {respuesta_texto}")
+            logger.debug(f"Respuesta: {respuesta_texto[:500]}...")
             
             # Fallback: análisis básico
             return self._analisis_fallback(resultado, respuesta_texto)
@@ -322,6 +327,52 @@ IMPORTANTE: Las "top_15_conflictivas" deben estar ORDENADAS por riesgo descenden
         except Exception as e:
             logger.error(f"Error procesando respuesta: {str(e)}")
             return self._analisis_fallback(resultado, respuesta_texto)
+    
+    def _reparar_json_incompleto(self, texto: str) -> dict:
+        """
+        Intenta reparar JSON incompleto agregando cierres necesarios
+        """
+        import re
+        
+        # Contar llaves y corchetes
+        open_braces = texto.count('{')
+        close_braces = texto.count('}')
+        open_brackets = texto.count('[')
+        close_brackets = texto.count(']')
+        
+        # Agregar cierres faltantes
+        reparado = texto
+        
+        # Si hay strings sin cerrar, intentar cerrarlos
+        # Buscar la última comilla que no esté cerrada
+        if texto.count('"') % 2 != 0:
+            logger.warning("String sin cerrar detectado, agregando comilla")
+            reparado += '"'
+        
+        # Cerrar arrays faltantes
+        for _ in range(open_brackets - close_brackets):
+            reparado += ']'
+        
+        # Cerrar objetos faltantes
+        for _ in range(open_braces - close_braces):
+            reparado += '}'
+        
+        logger.info(f"JSON reparado: agregados {open_brackets - close_brackets} ']' y {open_braces - close_braces} '}}'")
+        
+        try:
+            return json.loads(reparado)
+        except:
+            # Si aún falla, agregar campos por defecto
+            logger.warning("Reparación automática falló, usando campos por defecto")
+            return {
+                "porcentaje_viabilidad": 25,
+                "nivel_riesgo": "ALTO",
+                "top_15_conflictivas": [],
+                "analisis_detallado": "Análisis incompleto debido a respuesta malformada de Gemini",
+                "recomendaciones": ["Realizar análisis manual"],
+                "factores_riesgo": ["JSON incompleto"],
+                "factores_favorables": []
+            }
     
     def _analisis_fallback(
         self,
