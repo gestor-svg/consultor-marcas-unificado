@@ -94,12 +94,13 @@ def obtener_hora_mexico():
 
 @app.route('/')
 def index():
-    """Landing público o redirect a dashboard si está autenticado"""
-    if esta_autenticado():
-        return redirect(url_for('dashboard'))
+    """Landing público - siempre accesible"""
+    # Verificar si está autenticado para mostrar botón de dashboard
+    usuario_autenticado = esta_autenticado()
     return render_template('public/index.html',
                          precio=Config.PRECIO_REPORTE,
-                         whatsapp=Config.WHATSAPP_NUMERO)
+                         whatsapp=Config.WHATSAPP_NUMERO,
+                         usuario_autenticado=usuario_autenticado)
 
 
 @app.route('/analizar', methods=['POST'])

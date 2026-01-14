@@ -393,39 +393,51 @@ class GoogleSheetsClient:
         
         Args:
             lead_data: Diccionario con los datos del lead
-                      Campos esperados: fecha, nombre, email, telefono, marca,
+                      Campos esperados: nombre, email, telefono, marca,
                       tipo_negocio, clase_sugerida, status_impi, pagado, analizado, pdf_url, notas
         
         Returns:
-            True si se agregó correctamente
+            Dict con {'success': True, 'id': lead_id} o False si falla
         """
         
         try:
-            params = {
-                'action': 'addLead'
-            }
-            
             # Convertir booleanos a strings para Google Sheets
             lead_formatted = lead_data.copy()
             if 'pagado' in lead_formatted:
-                lead_formatted['pagado'] = 'TRUE' if lead_formatted['pagado'] else 'FALSE'
+                if isinstance(lead_formatted['pagado'], bool):
+                    lead_formatted['pagado'] = lead_formatted['pagado']
+                elif lead_formatted['pagado'] in ['TRUE', 'true', True]:
+                    lead_formatted['pagado'] = True
+                else:
+                    lead_formatted['pagado'] = False
+            
             if 'analizado' in lead_formatted:
-                lead_formatted['analizado'] = 'TRUE' if lead_formatted['analizado'] else 'FALSE'
+                if isinstance(lead_formatted['analizado'], bool):
+                    lead_formatted['analizado'] = lead_formatted['analizado']
+                elif lead_formatted['analizado'] in ['TRUE', 'true', True]:
+                    lead_formatted['analizado'] = True
+                else:
+                    lead_formatted['analizado'] = False
+            
+            # Enviar con action y todos los campos al mismo nivel
+            data_to_send = {
+                'action': 'addLead',
+                **lead_formatted
+            }
+            
+            logger.info(f"Enviando lead: {list(lead_formatted.keys())}")
             
             response = requests.post(
                 self.apps_script_url,
-                json={
-                    **params,
-                    'leadData': lead_formatted
-                },
+                json=data_to_send,
                 timeout=30
             )
             
             if response.status_code == 200:
                 result = response.json()
                 if result.get('success'):
-                    logger.info(f"✅ Lead agregado exitosamente: {lead_data.get('email')}")
-                    return True
+                    logger.info(f"✅ Lead agregado exitosamente: ID {result.get('id')}")
+                    return result  # Retornar el dict completo con el ID
                 else:
                     logger.error(f"Error agregando lead: {result.get('error', 'Unknown error')}")
                     return False
@@ -435,6 +447,8 @@ class GoogleSheetsClient:
         
         except Exception as e:
             logger.error(f"Error agregando lead: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return False
     
     def agregar_facturacion(self, facturacion_data: Dict) -> bool:
@@ -443,7 +457,7 @@ class GoogleSheetsClient:
         
         Args:
             facturacion_data: Diccionario con los datos de facturación
-                             Campos esperados: fecha, telefono, email, requiere_factura,
+                             Campos esperados: telefono, email, requiere_factura,
                              rfc, razon_social, regimen_fiscal, uso_cfdi, codigo_postal
         
         Returns:
@@ -451,22 +465,26 @@ class GoogleSheetsClient:
         """
         
         try:
-            params = {
-                'action': 'addFacturacion'
+            # Copiar datos para no modificar el original
+            facturacion_formatted = facturacion_data.copy()
+            
+            # Agregar fecha/hora si no existen
+            if 'fecha' not in facturacion_formatted:
+                facturacion_formatted['fecha'] = datetime.now(self.timezone).strftime('%Y-%m-%d')
+            if 'hora' not in facturacion_formatted:
+                facturacion_formatted['hora'] = datetime.now(self.timezone).strftime('%H:%M:%S')
+            
+            # Enviar con action y todos los campos al mismo nivel
+            data_to_send = {
+                'action': 'addFacturacion',
+                **facturacion_formatted
             }
             
-            # Agregar fecha si no existe
-            if 'fecha' not in facturacion_data:
-                facturacion_data['fecha'] = datetime.now(self.timezone).strftime('%Y-%m-%d')
-            if 'hora' not in facturacion_data:
-                facturacion_data['hora'] = datetime.now(self.timezone).strftime('%H:%M:%S')
+            logger.info(f"Enviando facturación: requiere_factura={facturacion_formatted.get('requiere_factura')}")
             
             response = requests.post(
                 self.apps_script_url,
-                json={
-                    **params,
-                    'facturacionData': facturacion_data
-                },
+                json=data_to_send,
                 timeout=30
             )
             
@@ -484,6 +502,8 @@ class GoogleSheetsClient:
         
         except Exception as e:
             logger.error(f"Error agregando facturación: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return False
     
     def obtener_estadisticas(self) -> Dict:
