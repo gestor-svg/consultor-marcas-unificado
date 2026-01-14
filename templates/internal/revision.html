@@ -339,46 +339,65 @@ function cargarDatosEnPagina() {
     marcas.forEach((marca, i) => {
         tablaHTML += `<tr class="hover:bg-gray-50">`;
         tablaHTML += `<td class="px-4 py-3 text-sm text-gray-900">${i + 1}</td>`;
-        tablaHTML += `<td class="px-4 py-3 text-sm font-medium text-gray-900">${marca.denominacion}</td>`;
-        tablaHTML += `<td class="px-4 py-3 text-sm text-gray-600">${marca.expediente}</td>`;
+        tablaHTML += `<td class="px-4 py-3 text-sm font-medium text-gray-900">${marca.denominacion || '-'}</td>`;
+        tablaHTML += `<td class="px-4 py-3 text-sm text-gray-600">${marca.expediente || '-'}</td>`;
         tablaHTML += `<td class="px-4 py-3 text-sm text-gray-600">${marca.registro || '-'}</td>`;
-        tablaHTML += `<td class="px-4 py-3 text-sm"><span class="badge badge-info">${marca.clase}</span></td>`;
-        tablaHTML += `<td class="px-4 py-3 text-sm text-gray-600">${marca.titular.substring(0, 40)}...</td>`;
+        tablaHTML += `<td class="px-4 py-3 text-sm"><span class="badge badge-info">${marca.clase || '-'}</span></td>`;
+        
+        // Titular - validar que exista antes de hacer substring
+        const titular = marca.titular || 'No especificado';
+        const titularCorto = titular.length > 40 ? titular.substring(0, 40) + '...' : titular;
+        tablaHTML += `<td class="px-4 py-3 text-sm text-gray-600">${titularCorto}</td>`;
+        
         tablaHTML += `</tr>`;
     });
     
     tablaHTML += '</tbody></table>';
     
-    if (resultadoBusqueda.marcas_similares.length > 15) {
-        tablaHTML += `<p class="text-sm text-gray-500 mt-3 text-center">... y ${resultadoBusqueda.marcas_similares.length - 15} marcas más</p>`;
+    // Mostrar contador si hay más de 15 marcas
+    const totalMarcas = (resultadoBusqueda && resultadoBusqueda.marcas_similares) ? resultadoBusqueda.marcas_similares.length : marcas.length;
+    if (totalMarcas > 15) {
+        tablaHTML += `<p class="text-sm text-gray-500 mt-3 text-center">... y ${totalMarcas - 15} marcas más</p>`;
     }
     
     document.getElementById('tabla-marcas-container').innerHTML = tablaHTML;
     
-    // Análisis - EDITABLE
+    // Análisis - EDITABLE (con valor por defecto si no existe)
+    const analisisDetallado = analisisGemini.analisis_detallado || 
+                              `Análisis de viabilidad para la marca "${analisisGemini.marca_consultada}":\n\n` +
+                              `Porcentaje de viabilidad: ${analisisGemini.porcentaje_viabilidad}%\n` +
+                              `Nivel de riesgo: ${analisisGemini.nivel_riesgo}\n\n` +
+                              `Se encontraron ${marcas.length} marcas similares que podrían representar un conflicto.`;
+    
     document.getElementById('analisis-texto').innerHTML = `
         <textarea id="analisis-editable" 
                   rows="10" 
                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
-                  placeholder="Edita el análisis de Gemini aquí...">${analisisGemini.analisis_detallado}</textarea>
+                  placeholder="Edita el análisis de Gemini aquí...">${analisisDetallado}</textarea>
     `;
     
     // Factores de riesgo - Llenar textarea editable
     if (analisisGemini.factores_riesgo && analisisGemini.factores_riesgo.length > 0) {
         const textRiesgo = analisisGemini.factores_riesgo.map(f => `• ${f}`).join('\n');
         document.getElementById('factores-riesgo-editable').value = textRiesgo;
+    } else {
+        document.getElementById('factores-riesgo-editable').value = '• Similitud fonética con marcas existentes\n• Posible confusión en el mercado';
     }
     
     // Factores favorables - Llenar textarea editable
     if (analisisGemini.factores_favorables && analisisGemini.factores_favorables.length > 0) {
         const textFavorable = analisisGemini.factores_favorables.map(f => `• ${f}`).join('\n');
         document.getElementById('factores-favorables-editable').value = textFavorable;
+    } else {
+        document.getElementById('factores-favorables-editable').value = '• Marca distintiva\n• Clase específica';
     }
     
     // Recomendaciones - Llenar textarea editable
     if (analisisGemini.recomendaciones && analisisGemini.recomendaciones.length > 0) {
         const textRecomendaciones = analisisGemini.recomendaciones.map((r, i) => `${i + 1}. ${r}`).join('\n');
         document.getElementById('recomendaciones-editable').value = textRecomendaciones;
+    } else {
+        document.getElementById('recomendaciones-editable').value = '1. Realizar búsqueda exhaustiva\n2. Consultar con un experto\n3. Considerar variaciones de la marca';
     }
 }
 
