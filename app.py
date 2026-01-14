@@ -527,6 +527,7 @@ def api_analizar_gemini():
         marca_consulta = data.get('marca_consulta', '').strip()
         clase_consulta = data.get('clase_consulta', '')
         marcas_encontradas = data.get('marcas_encontradas', [])
+        lead_id = data.get('lead_id')  # Agregar lead_id
         
         if not marca_consulta or not marcas_encontradas:
             return jsonify({"success": False, "error": "Datos incompletos"}), 400
@@ -587,6 +588,16 @@ def api_analizar_gemini():
         
         # Convertir a diccionario para JSON
         analisis_dict = analisis.to_dict()
+        
+        # Guardar en sesión para usar en /revision/
+        if lead_id:
+            session[f'analisis_{lead_id}'] = analisis_dict
+            session[f'resultado_busqueda_{lead_id}'] = {
+                'marca_consultada': marca_consulta,
+                'clase_consultada': clase_niza,
+                'marcas': marcas_encontradas
+            }
+            logger.info(f"[ANÁLISIS GEMINI] Guardado en session: analisis_{lead_id}")
         
         return jsonify({
             "success": True,
