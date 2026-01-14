@@ -256,11 +256,13 @@ window.addEventListener('DOMContentLoaded', () => {
         if (!analisisGemini && analisisServer) {
             console.log('Usando análisis desde el servidor');
             analisisGemini = analisisServer;
-            // Crear un resultadoBusqueda mínimo
+            // Crear un resultadoBusqueda compatible
             resultadoBusqueda = {
                 marca_consultada: analisisServer.marca_consultada,
                 clase_consultada: analisisServer.clase_consultada,
-                marcas: analisisServer.marcas_conflictivas || []
+                marcas: analisisServer.marcas_conflictivas || [],
+                marcas_similares: analisisServer.marcas_conflictivas || [],  // Alias para compatibilidad
+                total_marcas: (analisisServer.marcas_conflictivas || []).length
             };
         }
         
@@ -308,16 +310,18 @@ function cargarDatosEnPagina() {
     if (analisisGemini.marcas_conflictivas && analisisGemini.marcas_conflictivas.length > 0) {
         // Usar las ordenadas por Gemini pero enriquecerlas con datos completos del IMPI
         marcas = analisisGemini.marcas_conflictivas.slice(0, 15).map(marcaConflictiva => {
-            // Buscar la marca completa en los resultados del IMPI
-            const marcaCompleta = resultadoBusqueda.marcas_similares.find(
-                m => m.expediente === marcaConflictiva.expediente ||
-                     m.denominacion === marcaConflictiva.denominacion
-            );
-            
-            // Si la encontramos, usar datos completos; si no, usar lo que tenemos
-            return marcaCompleta || marcaConflictiva;
+            // Buscar la marca completa en los resultados del IMPI (si existen)
+            if (resultadoBusqueda && resultadoBusqueda.marcas_similares && resultadoBusqueda.marcas_similares.length > 0) {
+                const marcaCompleta = resultadoBusqueda.marcas_similares.find(
+                    m => m.expediente === marcaConflictiva.expediente ||
+                         m.denominacion === marcaConflictiva.denominacion
+                );
+                return marcaCompleta || marcaConflictiva;
+            }
+            // Si no hay marcas_similares, usar la que tenemos
+            return marcaConflictiva;
         });
-    } else {
+    } else if (resultadoBusqueda && resultadoBusqueda.marcas_similares) {
         // Fallback a las del IMPI
         marcas = resultadoBusqueda.marcas_similares.slice(0, 15);
     }
