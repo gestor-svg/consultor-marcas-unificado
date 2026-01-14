@@ -573,8 +573,12 @@ def api_analizar_gemini():
             total_registros=len(marcas_objetos)
         )
         
+        logger.info(f"[ANÁLISIS GEMINI] ResultadoBusqueda creado: marca={resultado_busqueda.marca_consultada}, clase={resultado_busqueda.clase_consultada}, total_marcas={len(resultado_busqueda.marcas_encontradas)}")
+        
         # Analizar con Gemini
+        logger.info(f"[ANÁLISIS GEMINI] Llamando a analizador_gemini.analizar_viabilidad()...")
         analisis = analizador_gemini.analizar_viabilidad(resultado_busqueda)
+        logger.info(f"[ANÁLISIS GEMINI] Análisis completado exitosamente")
         
         # El método retorna un objeto AnalisisViabilidad, no un dict
         # No necesitamos verificar analisis["exito"] porque si hay error, lanza excepción
