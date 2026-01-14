@@ -481,11 +481,17 @@ async function generarPDF() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                email: lead.email,
+                lead_id: lead.id,
+                marca_consulta: analisisGemini.marca_consultada,
+                clase_consulta: analisisGemini.clase_consultada,
                 porcentaje_viabilidad: porcentajeAjustado,
-                analisis: analisisActualizado,
-                resultado_busqueda: resultadoBusqueda,
-                notas_experto: notasExperto
+                nivel_riesgo: analisisGemini.nivel_riesgo,
+                analisis_principal: analisisEditado,
+                factores_riesgo: factoresRiesgoEditado,
+                factores_favorables: factoresFavorablesEditado,
+                recomendaciones: recomendacionesEditado,
+                notas_experto: notasExperto,
+                marcas_conflictivas: analisisGemini.marcas_conflictivas || []
             })
         });
         
