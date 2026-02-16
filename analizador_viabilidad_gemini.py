@@ -28,17 +28,18 @@ class ConfigGemini:
     
     # API Key debe venir de variable de entorno
     API_KEY = os.getenv('GEMINI_API_KEY')
-    MODEL = "gemini-2.0-flash-exp"  # Modelo actualizado
+    MODEL = "gemini-1.5-flash"  # Modelo estable (gemini-2.0-flash-exp no disponible)
     
     # Parámetros de generación
     TEMPERATURE = 0.7  # Creatividad moderada
     TOP_P = 0.9
     TOP_K = 40
-    MAX_OUTPUT_TOKENS = 2048
+    MAX_OUTPUT_TOKENS = 4096  # Aumentado de 2048 para respuestas más completas
     
     # Escala de viabilidad
     VIABILIDAD_MIN = 0
     VIABILIDAD_MAX = 85  # Nunca 100% por factor humano del revisor IMPI
+
 
 
 class AnalisisViabilidad:
@@ -244,22 +245,28 @@ Se encontraron {total_marcas} marcas similares registradas o en trámite.
       "denominacion": "<nombre exacto>",
       "expediente": "<número>",
       "registro": "<número o vacío>",
-      "razon_conflicto": "<explicación breve>",
+      "razon_conflicto": "<máximo 100 caracteres>",
       "nivel_conflicto": "<MUY_ALTO|ALTO|MEDIO|BAJO>"
     }}
   ],
-  "analisis_detallado": "<2-3 párrafos explicando: 1) Por qué ese porcentaje, 2) Marcas más peligrosas, 3) Consideraciones>",
+  "analisis_detallado": "<máximo 500 palabras>",
   "recomendaciones": [
-    "<acción concreta 1>",
-    "<acción concreta 2>",
-    "<acción concreta 3>"
+    "<máximo 80 caracteres cada una>",
+    "<máximo 80 caracteres>",
+    "<máximo 80 caracteres>"
   ],
-  "factores_riesgo": ["<factor 1>", "<factor 2>"],
-  "factores_favorables": ["<factor 1>", "<factor 2>"],
+  "factores_riesgo": ["<máximo 60 caracteres>", "<máximo 60 caracteres>"],
+  "factores_favorables": ["<máximo 60 caracteres>", "<máximo 60 caracteres>"],
   "total_marcas_analizadas": {total_marcas}
 }}
 
-IMPORTANTE: Las "top_15_conflictivas" deben estar ORDENADAS por riesgo descendente (más peligrosa primero)."""
+CRÍTICO: 
+- Cierra TODOS los strings con comillas
+- Cierra TODOS los arrays con ]
+- Cierra TODOS los objetos con }}
+- NO uses saltos de línea dentro de strings
+- Mantén las explicaciones concisas
+- Las "top_15_conflictivas" deben estar ORDENADAS por riesgo descendente"""
         
         return prompt
     
