@@ -34,7 +34,7 @@ class ConfigGemini:
     TEMPERATURE = 0.7  # Creatividad moderada
     TOP_P = 0.95
     TOP_K = 64
-    MAX_OUTPUT_TOKENS = 8192  # Ajustado para gemini-2.5-flash
+    MAX_OUTPUT_TOKENS = 16384  # Aumentado para respuestas más completas (gemini-2.5-flash permite hasta 65K)
     
     # Escala de viabilidad
     VIABILIDAD_MIN = 0
@@ -222,30 +222,34 @@ Clase Niza: {resultado.clase_consultada if resultado.clase_consultada else "Toda
         
         prompt += f"""
 **RESULTADOS BÚSQUEDA FONÉTICA IMPI:**
+        prompt += f"""
+**RESULTADOS BÚSQUEDA FONÉTICA IMPI:**
 Se encontraron {total_marcas} marcas similares registradas o en trámite.
-
-**TODAS LAS MARCAS ({total_marcas} total):**
 """
         
-        # Listar TODAS las marcas para que Gemini las analice
-        for i, marca in enumerate(resultado.marcas_encontradas, 1):
-            prompt += f"\n{i}. {marca.denominacion}"
-            prompt += f"\n   Expediente: {marca.expediente}"
+        # Limitar a top 50 marcas más relevantes para ahorrar tokens
+        marcas_a_analizar = resultado.marcas_encontradas[:50] if total_marcas > 50 else resultado.marcas_encontradas
+        
+        prompt += f"\n**TOP {len(marcas_a_analizar)} MARCAS MÁS RELEVANTES:**\n"
+        
+        # Listar solo las marcas más relevantes de forma compacta
+        for i, marca in enumerate(marcas_a_analizar, 1):
+            # Formato compacto: número, denominación, expediente, clase
+            prompt += f"\n{i}. {marca.denominacion} | Exp:{marca.expediente}"
             if marca.registro:
-                prompt += f" | Registro: {marca.registro}"
-            prompt += f" | Clase: {marca.clase}"
-            prompt += f" | Titular: {marca.titular[:50]}..."
+                prompt += f" | Reg:{marca.registro}"
+            prompt += f" | C{marca.clase}"
         
         # Instrucciones críticas
         prompt += f"""
 
 **TU TAREA CRÍTICA:**
 
-1. **IDENTIFICA** las 15 marcas MÁS CONFLICTIVAS de las {total_marcas} analizadas
+1. **IDENTIFICA** las 15 marcas MÁS CONFLICTIVAS de las {len(marcas_a_analizar)} listadas arriba
 2. **ORDÉNALAS** por nivel de riesgo (más peligrosa primero)
 3. **PRIORIZA**:
-   - Coincidencias EXACTAS (ej: "CAFE LUNA" vs "LUNA CAFE") → RIESGO MUY ALTO
-   - Marcas con REGISTRO vigente (no solo expediente) → MÁS PELIGROSAS
+   - Coincidencias EXACTAS → RIESGO MUY ALTO
+   - Marcas con REGISTRO vigente → MÁS PELIGROSAS
    - Alta similitud fonética en misma clase → RIESGO ALTO
    - Similitud moderada → RIESGO MEDIO
 
@@ -255,39 +259,30 @@ Se encontraron {total_marcas} marcas similares registradas o en trámite.
    - Similitudes moderadas → 50-65%
    - Solo similitudes bajas → 70-80%
 
-**RESPONDE EN FORMATO JSON EXACTO (sin markdown, solo JSON):**
+**RESPONDE EN FORMATO JSON EXACTO (sin markdown, solo JSON puro):**
 
 {{
   "porcentaje_viabilidad": <número 15-80>,
   "nivel_riesgo": "<MUY_ALTO|ALTO|MEDIO|BAJO>",
   "top_15_conflictivas": [
-    {{
-      "posicion": 1,
-      "denominacion": "<nombre exacto>",
-      "expediente": "<número>",
-      "registro": "<número o vacío>",
-      "razon_conflicto": "<máximo 100 caracteres>",
-      "nivel_conflicto": "<MUY_ALTO|ALTO|MEDIO|BAJO>"
-    }}
+    {{"posicion": 1, "denominacion": "<max 50 chars>", "expediente": "<num>", "registro": "<num o ''>", "razon_conflicto": "<max 80 chars>", "nivel_conflicto": "<MUY_ALTO|ALTO|MEDIO|BAJO>"}},
+    {{"posicion": 2, ...máximo 15 marcas...}}
   ],
-  "analisis_detallado": "<máximo 500 palabras>",
-  "recomendaciones": [
-    "<máximo 80 caracteres cada una>",
-    "<máximo 80 caracteres>",
-    "<máximo 80 caracteres>"
-  ],
-  "factores_riesgo": ["<máximo 60 caracteres>", "<máximo 60 caracteres>"],
-  "factores_favorables": ["<máximo 60 caracteres>", "<máximo 60 caracteres>"],
+  "analisis_detallado": "<300 palabras máximo, sin saltos de línea>",
+  "recomendaciones": ["<max 70 chars>", "<max 70 chars>", "<max 70 chars>"],
+  "factores_riesgo": ["<max 50 chars>", "<max 50 chars>"],
+  "factores_favorables": ["<max 50 chars>", "<max 50 chars>"],
   "total_marcas_analizadas": {total_marcas}
 }}
 
-CRÍTICO: 
-- Cierra TODOS los strings con comillas
-- Cierra TODOS los arrays con ]
-- Cierra TODOS los objetos con }}
-- NO uses saltos de línea dentro de strings
-- Mantén las explicaciones concisas
-- Las "top_15_conflictivas" deben estar ORDENADAS por riesgo descendente"""
+⚠️ CRÍTICO - REGLAS JSON:
+1. NO uses saltos de línea \\n dentro de strings
+2. CIERRA todos los strings con comillas "
+3. CIERRA todos los arrays con ]
+4. CIERRA todos los objetos con }}
+5. SÉ CONCISO - respeta los límites de caracteres
+6. NO agregues comentarios ni markdown
+7. Asegúrate de que el JSON sea VÁLIDO antes de enviarlo"""
         
         return prompt
     
