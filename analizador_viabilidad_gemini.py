@@ -28,17 +28,18 @@ class ConfigGemini:
     
     # API Key debe venir de variable de entorno
     API_KEY = os.getenv('GEMINI_API_KEY')
-    MODEL = "gemini-2.5-flash"  # Modelo estable con 65K tokens de salida
+    MODEL = "gemini-2.5-flash"
     
     # Parámetros de generación
-    TEMPERATURE = 0.7  # Creatividad moderada
+    TEMPERATURE = 0.7
     TOP_P = 0.95
     TOP_K = 64
-    MAX_OUTPUT_TOKENS = 16384  # Aumentado para respuestas más completas (gemini-2.5-flash permite hasta 65K)
+    MAX_OUTPUT_TOKENS = 16384
     
     # Escala de viabilidad
     VIABILIDAD_MIN = 0
-    VIABILIDAD_MAX = 85  # Nunca 100% por factor humano del revisor IMPI
+    VIABILIDAD_MAX = 85
+
 
 
 
@@ -110,31 +111,10 @@ class AnalizadorViabilidadGemini:
         # Configurar API key
         genai.configure(api_key=api_key)
         
-        # Verificar modelos disponibles
-        try:
-            modelos_disponibles = []
-            for model in genai.list_models():
-                if 'generateContent' in model.supported_generation_methods:
-                    modelos_disponibles.append(model.name.replace('models/', ''))
-            
-            logger.info(f"📋 Modelos disponibles: {', '.join(modelos_disponibles[:3])}")
-            
-            # Verificar si el modelo configurado está disponible
-            if self.config.MODEL not in modelos_disponibles:
-                logger.warning(f"⚠️ Modelo '{self.config.MODEL}' no disponible. Disponibles: {modelos_disponibles}")
-                if modelos_disponibles:
-                    self.config.MODEL = modelos_disponibles[0]
-                    logger.info(f"✓ Usando modelo alternativo: {self.config.MODEL}")
-        except Exception as e:
-            logger.warning(f"No se pudieron listar modelos: {e}")
-        
         # Crear modelo
-        try:
-            self.model = genai.GenerativeModel(self.config.MODEL)
-            logger.info(f"✅ Analizador Gemini inicializado con modelo {self.config.MODEL}")
-        except Exception as e:
-            logger.error(f"❌ Error inicializando modelo {self.config.MODEL}: {e}")
-            raise ValueError(f"No se pudo inicializar Gemini. Verifica tu API key en https://aistudio.google.com/app/apikey")
+        self.model = genai.GenerativeModel(self.config.MODEL)
+        
+        logger.info(f"✅ Analizador Gemini inicializado con modelo {self.config.MODEL}")
     
     def analizar_viabilidad(
         self,
@@ -222,34 +202,30 @@ Clase Niza: {resultado.clase_consultada if resultado.clase_consultada else "Toda
         
         prompt += f"""
 **RESULTADOS BÚSQUEDA FONÉTICA IMPI:**
-        prompt += f"""
-**RESULTADOS BÚSQUEDA FONÉTICA IMPI:**
 Se encontraron {total_marcas} marcas similares registradas o en trámite.
+
+**TODAS LAS MARCAS ({total_marcas} total):**
 """
         
-        # Limitar a top 50 marcas más relevantes para ahorrar tokens
-        marcas_a_analizar = resultado.marcas_encontradas[:50] if total_marcas > 50 else resultado.marcas_encontradas
-        
-        prompt += f"\n**TOP {len(marcas_a_analizar)} MARCAS MÁS RELEVANTES:**\n"
-        
-        # Listar solo las marcas más relevantes de forma compacta
-        for i, marca in enumerate(marcas_a_analizar, 1):
-            # Formato compacto: número, denominación, expediente, clase
-            prompt += f"\n{i}. {marca.denominacion} | Exp:{marca.expediente}"
+        # Listar TODAS las marcas para que Gemini las analice
+        for i, marca in enumerate(resultado.marcas_encontradas, 1):
+            prompt += f"\n{i}. {marca.denominacion}"
+            prompt += f"\n   Expediente: {marca.expediente}"
             if marca.registro:
-                prompt += f" | Reg:{marca.registro}"
-            prompt += f" | C{marca.clase}"
+                prompt += f" | Registro: {marca.registro}"
+            prompt += f" | Clase: {marca.clase}"
+            prompt += f" | Titular: {marca.titular[:50]}..."
         
         # Instrucciones críticas
         prompt += f"""
 
 **TU TAREA CRÍTICA:**
 
-1. **IDENTIFICA** las 15 marcas MÁS CONFLICTIVAS de las {len(marcas_a_analizar)} listadas arriba
+1. **IDENTIFICA** las 15 marcas MÁS CONFLICTIVAS de las {total_marcas} analizadas
 2. **ORDÉNALAS** por nivel de riesgo (más peligrosa primero)
 3. **PRIORIZA**:
-   - Coincidencias EXACTAS → RIESGO MUY ALTO
-   - Marcas con REGISTRO vigente → MÁS PELIGROSAS
+   - Coincidencias EXACTAS (ej: "CAFE LUNA" vs "LUNA CAFE") → RIESGO MUY ALTO
+   - Marcas con REGISTRO vigente (no solo expediente) → MÁS PELIGROSAS
    - Alta similitud fonética en misma clase → RIESGO ALTO
    - Similitud moderada → RIESGO MEDIO
 
@@ -259,30 +235,39 @@ Se encontraron {total_marcas} marcas similares registradas o en trámite.
    - Similitudes moderadas → 50-65%
    - Solo similitudes bajas → 70-80%
 
-**RESPONDE EN FORMATO JSON EXACTO (sin markdown, solo JSON puro):**
+**RESPONDE EN FORMATO JSON EXACTO (sin markdown, solo JSON):**
 
 {{
   "porcentaje_viabilidad": <número 15-80>,
   "nivel_riesgo": "<MUY_ALTO|ALTO|MEDIO|BAJO>",
   "top_15_conflictivas": [
-    {{"posicion": 1, "denominacion": "<max 50 chars>", "expediente": "<num>", "registro": "<num o ''>", "razon_conflicto": "<max 80 chars>", "nivel_conflicto": "<MUY_ALTO|ALTO|MEDIO|BAJO>"}},
-    {{"posicion": 2, ...máximo 15 marcas...}}
+    {{
+      "posicion": 1,
+      "denominacion": "<nombre exacto>",
+      "expediente": "<número>",
+      "registro": "<número o vacío>",
+      "razon_conflicto": "<máximo 100 caracteres>",
+      "nivel_conflicto": "<MUY_ALTO|ALTO|MEDIO|BAJO>"
+    }}
   ],
-  "analisis_detallado": "<300 palabras máximo, sin saltos de línea>",
-  "recomendaciones": ["<max 70 chars>", "<max 70 chars>", "<max 70 chars>"],
-  "factores_riesgo": ["<max 50 chars>", "<max 50 chars>"],
-  "factores_favorables": ["<max 50 chars>", "<max 50 chars>"],
+  "analisis_detallado": "<máximo 500 palabras>",
+  "recomendaciones": [
+    "<máximo 80 caracteres cada una>",
+    "<máximo 80 caracteres>",
+    "<máximo 80 caracteres>"
+  ],
+  "factores_riesgo": ["<máximo 60 caracteres>", "<máximo 60 caracteres>"],
+  "factores_favorables": ["<máximo 60 caracteres>", "<máximo 60 caracteres>"],
   "total_marcas_analizadas": {total_marcas}
 }}
 
-⚠️ CRÍTICO - REGLAS JSON:
-1. NO uses saltos de línea \\n dentro de strings
-2. CIERRA todos los strings con comillas "
-3. CIERRA todos los arrays con ]
-4. CIERRA todos los objetos con }}
-5. SÉ CONCISO - respeta los límites de caracteres
-6. NO agregues comentarios ni markdown
-7. Asegúrate de que el JSON sea VÁLIDO antes de enviarlo"""
+CRÍTICO: 
+- Cierra TODOS los strings con comillas
+- Cierra TODOS los arrays con ]
+- Cierra TODOS los objetos con }}
+- NO uses saltos de línea dentro de strings
+- Mantén las explicaciones concisas
+- Las "top_15_conflictivas" deben estar ORDENADAS por riesgo descendente"""
         
         return prompt
     
