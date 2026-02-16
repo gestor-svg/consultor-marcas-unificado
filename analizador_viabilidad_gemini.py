@@ -147,14 +147,15 @@ class AnalizadorViabilidadGemini:
             
             logger.debug(f"Prompt generado: {len(prompt)} caracteres")
             
-            # Llamar a Gemini
+            # Llamar a Gemini con MIME type JSON para garantizar respuesta válida
             response = self.model.generate_content(
                 prompt,
                 generation_config=genai.GenerationConfig(
                     temperature=self.config.TEMPERATURE,
                     top_p=self.config.TOP_P,
                     top_k=self.config.TOP_K,
-                    max_output_tokens=self.config.MAX_OUTPUT_TOKENS
+                    max_output_tokens=self.config.MAX_OUTPUT_TOKENS,
+                    response_mime_type="application/json"  # CRÍTICO: Fuerza JSON válido
                 )
             )
             
@@ -163,6 +164,7 @@ class AnalizadorViabilidadGemini:
                 return self._analisis_error(resultado_busqueda, "Sin respuesta de Gemini")
             
             logger.debug(f"Respuesta de Gemini: {len(response.text)} caracteres")
+            logger.debug(f"Primeros 200 chars: {response.text[:200]}")
             
             # Parsear respuesta
             analisis = self._parsear_respuesta_gemini(
@@ -250,24 +252,14 @@ Se encontraron {total_marcas} marcas similares registradas o en trámite.
       "nivel_conflicto": "<MUY_ALTO|ALTO|MEDIO|BAJO>"
     }}
   ],
-  "analisis_detallado": "<máximo 500 palabras>",
-  "recomendaciones": [
-    "<máximo 80 caracteres cada una>",
-    "<máximo 80 caracteres>",
-    "<máximo 80 caracteres>"
-  ],
-  "factores_riesgo": ["<máximo 60 caracteres>", "<máximo 60 caracteres>"],
-  "factores_favorables": ["<máximo 60 caracteres>", "<máximo 60 caracteres>"],
+  "analisis_detallado": "<texto de 200-300 palabras>",
+  "recomendaciones": ["<texto breve>", "<texto breve>", "<texto breve>"],
+  "factores_riesgo": ["<texto breve>", "<texto breve>"],
+  "factores_favorables": ["<texto breve>", "<texto breve>"],
   "total_marcas_analizadas": {total_marcas}
 }}
 
-CRÍTICO: 
-- Cierra TODOS los strings con comillas
-- Cierra TODOS los arrays con ]
-- Cierra TODOS los objetos con }}
-- NO uses saltos de línea dentro de strings
-- Mantén las explicaciones concisas
-- Las "top_15_conflictivas" deben estar ORDENADAS por riesgo descendente"""
+Importante: Mantén textos concisos. Las top_15_conflictivas deben estar ordenadas por riesgo."""
         
         return prompt
     
