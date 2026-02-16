@@ -28,13 +28,13 @@ class ConfigGemini:
     
     # API Key debe venir de variable de entorno
     API_KEY = os.getenv('GEMINI_API_KEY')
-    MODEL = "gemini-1.5-flash"  # Modelo estable (gemini-2.0-flash-exp no disponible)
+    MODEL = "gemini-2.5-flash"  # Modelo estable con 65K tokens de salida
     
     # Parámetros de generación
     TEMPERATURE = 0.7  # Creatividad moderada
-    TOP_P = 0.9
-    TOP_K = 40
-    MAX_OUTPUT_TOKENS = 4096  # Aumentado de 2048 para respuestas más completas
+    TOP_P = 0.95
+    TOP_K = 64
+    MAX_OUTPUT_TOKENS = 8192  # Ajustado para gemini-2.5-flash
     
     # Escala de viabilidad
     VIABILIDAD_MIN = 0
@@ -110,10 +110,31 @@ class AnalizadorViabilidadGemini:
         # Configurar API key
         genai.configure(api_key=api_key)
         
-        # Crear modelo
-        self.model = genai.GenerativeModel(self.config.MODEL)
+        # Verificar modelos disponibles
+        try:
+            modelos_disponibles = []
+            for model in genai.list_models():
+                if 'generateContent' in model.supported_generation_methods:
+                    modelos_disponibles.append(model.name.replace('models/', ''))
+            
+            logger.info(f"📋 Modelos disponibles: {', '.join(modelos_disponibles[:3])}")
+            
+            # Verificar si el modelo configurado está disponible
+            if self.config.MODEL not in modelos_disponibles:
+                logger.warning(f"⚠️ Modelo '{self.config.MODEL}' no disponible. Disponibles: {modelos_disponibles}")
+                if modelos_disponibles:
+                    self.config.MODEL = modelos_disponibles[0]
+                    logger.info(f"✓ Usando modelo alternativo: {self.config.MODEL}")
+        except Exception as e:
+            logger.warning(f"No se pudieron listar modelos: {e}")
         
-        logger.info(f"✅ Analizador Gemini inicializado con modelo {self.config.MODEL}")
+        # Crear modelo
+        try:
+            self.model = genai.GenerativeModel(self.config.MODEL)
+            logger.info(f"✅ Analizador Gemini inicializado con modelo {self.config.MODEL}")
+        except Exception as e:
+            logger.error(f"❌ Error inicializando modelo {self.config.MODEL}: {e}")
+            raise ValueError(f"No se pudo inicializar Gemini. Verifica tu API key en https://aistudio.google.com/app/apikey")
     
     def analizar_viabilidad(
         self,
